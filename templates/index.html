@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snowy AI - Roblox Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="login-screen" class="screen">
+        <div class="login-container">
+            <h1>Snowy AI</h1>
+            <p>Enter your Roblox username to get started</p>
+            <div class="input-group">
+                <input type="text" id="username-input" placeholder="Roblox Username">
+                <button id="login-btn">Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="screen hidden">
+        <header>
+            <div class="logo-area">
+                <i class="fas fa-snowflake"></i>
+                <span>Snowy AI</span>
+            </div>
+            <div class="settings">
+                <i class="fas fa-cog"></i>
+            </div>
+        </header>
+
+        <main id="chat-messages">
+            <!-- Messages will appear here -->
+        </main>
+
+        <div id="connection-banner" class="banner">
+            <div class="banner-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Execute the script in your Roblox executor to connect</span>
+                <button id="copy-script-btn">Copy</button>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <button class="suggestion-btn">Speed hack toggle</button>
+            <button class="suggestion-btn">ESP all players</button>
+            <button class="suggestion-btn">Who am I?</button>
+        </div>
+
+        <footer>
+            <div class="input-container">
+                <button class="plus-btn"><i class="fas fa-plus"></i></button>
+                <input type="text" id="chat-input" placeholder="Message Snowy AI...">
+                <div class="input-actions">
+                    <button class="mic-btn"><i class="fas fa-microphone"></i></button>
+                    <button id="send-btn" class="send-btn"><i class="fas fa-arrow-up"></i></button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
