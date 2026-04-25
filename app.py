@@ -4,6 +4,8 @@ import os
 import urllib.request
 import json
 
+import time
+
 app = Flask(__name__)
 
 # --- CONFIGURATION API ---
@@ -13,7 +15,7 @@ if API_KEY:
 
 user_sessions = {}
 # user_sessions structure:
-# { "username": { "connected": bool, "pending": "code string", "staged_code": "code string", "game_data": {} } }
+# { "username": { "connected": bool, "last_poll": 0, "pending": "code string", "staged_code": "code string", "game_data": {} } }
 
 def get_roblox_thumbnails(user_id, place_id):
     user_img = "https://tr.rbxcdn.com/38c6edcb50633730ff4cf39ac8859840/150/150/AvatarHeadshot/Png" # fallback
@@ -55,7 +57,7 @@ def login():
     data = request.get_json(force=True)
     username = data.get('username', '').lower()
     if username and username not in user_sessions:
-        user_sessions[username] = {"connected": False, "pending": None, "staged_code": None, "game_data": None}
+        user_sessions[username] = {"connected": False, "last_poll": 0, "pending": None, "staged_code": None, "game_data": None}
     return jsonify({"success": True})
 
 @app.route('/api/status/<username>')
@@ -64,8 +66,11 @@ def status(username):
     if not user:
         return jsonify({"connected": False})
         
+    if user.get("last_poll", 0) > 0 and time.time() - user["last_poll"] > 10:
+        user["connected"] = False
+        
     response_data = {"connected": user["connected"]}
-    if user.get("game_data"):
+    if user["connected"] and user.get("game_data"):
         response_data["game_data"] = {
             "gameName": user["game_data"].get("gameName", "Unknown Game"),
             "user_img": user["game_data"].get("user_img", ""),
@@ -210,18 +215,22 @@ def rb_connect():
         
     if username in user_sessions:
         user_sessions[username]["connected"] = True
+        user_sessions[username]["last_poll"] = time.time()
         user_sessions[username]["game_data"] = data
     else:
-        user_sessions[username] = {"connected": True, "pending": None, "staged_code": None, "game_data": data}
+        user_sessions[username] = {"connected": True, "last_poll": time.time(), "pending": None, "staged_code": None, "game_data": data}
     return jsonify({"success": True})
 
 @app.route('/api/roblox/poll/<username>')
 def rb_poll(username):
     user = user_sessions.get(username.lower())
-    if user and user.get("pending"):
-        cmd = user["pending"]
-        user["pending"] = None
-        return jsonify({"command": cmd})
+    if user:
+        user["last_poll"] = time.time()
+        user["connected"] = True
+        if user.get("pending"):
+            cmd = user["pending"]
+            user["pending"] = None
+            return jsonify({"command": cmd})
     return jsonify({"command": None})
 
 if __name__ == '__main__':
