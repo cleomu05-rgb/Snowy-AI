@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 import os
+import urllib.request
+import json
 
 app = Flask(__name__)
 
@@ -12,6 +14,29 @@ if API_KEY:
 user_sessions = {}
 # user_sessions structure:
 # { "username": { "connected": bool, "pending": "code string", "staged_code": "code string", "game_data": {} } }
+
+def get_roblox_thumbnails(user_id, place_id):
+    user_img = "https://tr.rbxcdn.com/38c6edcb50633730ff4cf39ac8859840/150/150/AvatarHeadshot/Png" # fallback
+    game_img = "https://tr.rbxcdn.com/53eb9b17fe1432a809c73a13889b5006/150/150/Image/Png" # fallback
+    try:
+        if user_id:
+            req = urllib.request.urlopen(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true", timeout=3)
+            res = json.loads(req.read())
+            if res.get('data') and len(res['data']) > 0:
+                user_img = res['data'][0]['imageUrl']
+    except Exception as e:
+        print("User img error", e)
+        
+    try:
+        if place_id:
+            req = urllib.request.urlopen(f"https://thumbnails.roblox.com/v1/places/gameicons?placeIds={place_id}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false", timeout=3)
+            res = json.loads(req.read())
+            if res.get('data') and len(res['data']) > 0:
+                game_img = res['data'][0]['imageUrl']
+    except Exception as e:
+        print("Game img error", e)
+        
+    return user_img, game_img
 
 @app.route('/')
 def index():
@@ -28,7 +53,17 @@ def login():
 @app.route('/api/status/<username>')
 def status(username):
     user = user_sessions.get(username.lower())
-    return jsonify({"connected": user["connected"] if user else False})
+    if not user:
+        return jsonify({"connected": False})
+        
+    response_data = {"connected": user["connected"]}
+    if user.get("game_data"):
+        response_data["game_data"] = {
+            "gameName": user["game_data"].get("gameName", "Unknown Game"),
+            "user_img": user["game_data"].get("user_img", ""),
+            "game_img": user["game_data"].get("game_img", "")
+        }
+    return jsonify(response_data)
 
 @app.route('/api/suggestions', methods=['GET'])
 def get_suggestions():
@@ -53,11 +88,13 @@ def chat():
     model_name = data.get('model', 'gemini-pro')
     direct_execute = data.get('direct_execute', True)
     
-    # Retrieve real game telemetry if available
     user_data = user_sessions.get(username, {})
     game_context = ""
+    game_name_for_search = "Roblox"
+    
     if user_data.get("game_data"):
         gd = user_data["game_data"]
+        game_name_for_search = gd.get('gameName', 'Roblox')
         game_context = f"""
         [LIVE ROBLOX GAME CONTEXT]
         Game Name: {gd.get('gameName')}
@@ -83,14 +120,14 @@ def chat():
     {game_context}
     
     You MUST format your response EXACTLY like this:
-    RESPONSE: [Explain your analysis or what you created conversationally. USE THE REAL LIVE DATA provided above to prove you are analyzing their specific game. For example, mention the game's actual name, creator, or specific Remotes/Objects found in the preview.]
+    RESPONSE: [Explain your analysis or what you created conversationally.]
     CODE:
     ```lua
     -- Write your Lua code here
     ```
     
     RULES:
-    1. If the user asks for "game info", use the [LIVE ROBLOX GAME CONTEXT] provided to give them the exact Name, Creator, and details of what they are playing right now.
+    1. If the user asks for "game info" or information about the game, USE YOUR VAST INTERNET KNOWLEDGE to explain the Roblox game "{game_name_for_search}". Tell them the goal of the game, creator info, release date, and general tips. If the LIVE CONTEXT above is valid, incorporate it. DO NOT just say "I don't have this data". You are a smart AI, you know what {game_name_for_search} is.
     2. If the user asks to "explore" or "analyze", write a Lua script that targets the specific objects or Remotes listed in the preview, and print results using `print("ANALYZED : Found -> " .. item.Name)`
     3. The CODE section must contain ONLY valid Lua code. No markdown outside the block.
     4. Write efficient and working exploit code for modern executors.
@@ -152,8 +189,16 @@ def authorize_execute():
 def rb_connect():
     data = request.get_json(force=True)
     username = data.get('username', '').lower()
+    user_id = data.get('userId')
+    place_id = data.get('placeId')
+    
     if not username:
         return jsonify({"error": "No username provided"}), 400
+        
+    # Fetch profile and game images
+    user_img, game_img = get_roblox_thumbnails(user_id, place_id)
+    data["user_img"] = user_img
+    data["game_img"] = game_img
         
     if username in user_sessions:
         user_sessions[username]["connected"] = True
