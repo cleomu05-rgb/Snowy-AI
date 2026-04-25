@@ -13,16 +13,6 @@ API_KEY = os.environ.get("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
-OPENAI_KEY = os.environ.get("OPENAI_KEY")
-STEPFUN_KEY = os.environ.get("STEPFUN_KEY")
-try:
-    from openai import OpenAI
-    openai_client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
-    stepfun_client = OpenAI(api_key=STEPFUN_KEY, base_url="https://api.stepfun.com/v1") if STEPFUN_KEY else None
-except ImportError:
-    openai_client = None
-    stepfun_client = None
-
 user_sessions = {}
 # user_sessions structure:
 # { "username": { "connected": bool, "last_poll": 0, "pending": "code string", "staged_code": "code string", "game_data": {} } }
@@ -167,20 +157,34 @@ def chat():
     
     try:
         if "step" in model_name.lower():
-            if not stepfun_client:
-                return jsonify({"error": "StepFun API Key not configured. Please set STEPFUN_KEY environment variable."}), 500
+            step_key = os.environ.get("STEPFUN_KEY")
+            if not step_key:
+                return jsonify({"error": "StepFun API Key not configured. Please set STEPFUN_KEY in Render."}), 500
             
-            response = stepfun_client.chat.completions.create(
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=step_key, base_url="https://api.stepfun.com/v1")
+            except ImportError:
+                return jsonify({"error": "openai package missing. Check requirements.txt"}), 500
+                
+            response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7
             )
             text = response.choices[0].message.content
         elif "gpt" in model_name.lower():
-            if not openai_client:
-                return jsonify({"error": "OpenAI API Key not configured. Please set OPENAI_KEY environment variable."}), 500
+            openai_key = os.environ.get("OPENAI_KEY")
+            if not openai_key:
+                return jsonify({"error": "OpenAI API Key not configured. Please set OPENAI_KEY in Render."}), 500
             
-            response = openai_client.chat.completions.create(
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+            except ImportError:
+                return jsonify({"error": "openai package missing. Check requirements.txt"}), 500
+                
+            response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7
