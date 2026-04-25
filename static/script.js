@@ -116,6 +116,21 @@ async function startStatusPolling() {
             if (data.connected) {
                 connectionBanner.classList.add('hidden');
                 showNotification();
+                
+                // Update live profile
+                if (data.game_data) {
+                    document.getElementById('live-profile').classList.remove('hidden');
+                    document.getElementById('user-name-display').textContent = '@' + currentUser;
+                    document.getElementById('game-name-display').textContent = 'Playing ' + data.game_data.gameName;
+                    
+                    if (data.game_data.user_img) {
+                        document.getElementById('user-avatar').src = data.game_data.user_img;
+                    }
+                    if (data.game_data.game_img) {
+                        document.getElementById('game-icon').src = data.game_data.game_img;
+                    }
+                }
+                
             } else {
                 connectionBanner.classList.remove('hidden');
             }
