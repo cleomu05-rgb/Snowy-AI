@@ -144,9 +144,9 @@ function addMessage(text, sender, id = null) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Custom copy button logic for the JNKIE API link
+// Custom copy button logic for the new Github link
 copyScriptBtn.addEventListener('click', () => {
-    const scriptToCopy = `loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/a807692946e8c7266832a7b0f42236dd8101bd9ef807c6cc074714639f007228/download"))()`;
+    const scriptToCopy = `loadstring(game:HttpGet("https://raw.githubusercontent.com/cleomu05-rgb/script/refs/heads/main/roblox/antigravity"))()`;
     
     navigator.clipboard.writeText(scriptToCopy).then(() => {
         copyScriptBtn.textContent = "Copied!";
