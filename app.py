@@ -11,7 +11,7 @@ if API_KEY:
 
 user_sessions = {}
 # user_sessions structure:
-# { "username": { "connected": bool, "pending": "code string", "staged_code": "code string" } }
+# { "username": { "connected": bool, "pending": "code string", "staged_code": "code string", "game_data": {} } }
 
 @app.route('/')
 def index():
@@ -22,7 +22,7 @@ def login():
     data = request.get_json(force=True)
     username = data.get('username', '').lower()
     if username and username not in user_sessions:
-        user_sessions[username] = {"connected": False, "pending": None, "staged_code": None}
+        user_sessions[username] = {"connected": False, "pending": None, "staged_code": None, "game_data": None}
     return jsonify({"success": True})
 
 @app.route('/api/status/<username>')
@@ -53,24 +53,47 @@ def chat():
     model_name = data.get('model', 'gemini-pro')
     direct_execute = data.get('direct_execute', True)
     
-    # If the user asked to put it in a lua file
+    # Retrieve real game telemetry if available
+    user_data = user_sessions.get(username, {})
+    game_context = ""
+    if user_data.get("game_data"):
+        gd = user_data["game_data"]
+        game_context = f"""
+        [LIVE ROBLOX GAME CONTEXT]
+        Game Name: {gd.get('gameName')}
+        Creator: {gd.get('gameCreator')}
+        Created: {gd.get('gameCreated')}
+        PlaceId: {gd.get('placeId')}
+        Description: {gd.get('gameDescription')}
+        
+        [WORKSPACE PREVIEW (Top 15 items)]:
+        {', '.join(gd.get('workspacePreview', []))}
+        
+        [REMOTE EVENTS PREVIEW]:
+        {', '.join(gd.get('remotePreview', []))}
+        """
+    
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
 
     prompt = f"""
     You are Snowy AI, a highly advanced Roblox exploit generator and game analyzer (similar to Antigravity).
     The user wants: {message}
     
+    Here is the REAL, live data from the user's current Roblox session:
+    {game_context}
+    
     You MUST format your response EXACTLY like this:
-    RESPONSE: [Explain your analysis or what you created conversationally]
+    RESPONSE: [Explain your analysis or what you created conversationally. USE THE REAL LIVE DATA provided above to prove you are analyzing their specific game. For example, mention the game's actual name, creator, or specific Remotes/Objects found in the preview.]
     CODE:
     ```lua
     -- Write your Lua code here
     ```
     
     RULES:
-    1. If the user asks to "explore", "analyze", or "find exploits", you MUST write a Lua script that recursively scans the game (Workspace, ReplicatedStorage), looks for RemoteEvents, RemoteFunctions, or unprotected instances (like Chests, Coins, Money), and prints them to the Roblox console using this exact format: `print("ANALYZED : Found RemoteEvent -> " .. remote.Name)`
-    2. The CODE section must contain ONLY valid Lua code. No markdown outside the block.
-    3. Write efficient and working exploit code for modern executors.
+    1. If the user asks for "game info", use the [LIVE ROBLOX GAME CONTEXT] provided to give them the exact Name, Creator, and details of what they are playing right now.
+    2. If the user asks to "explore" or "analyze", write a Lua script that targets the specific objects or Remotes listed in the preview, and print results using `print("ANALYZED : Found -> " .. item.Name)`
+    3. The CODE section must contain ONLY valid Lua code. No markdown outside the block.
+    4. Write efficient and working exploit code for modern executors.
     """
     
     try:
@@ -134,8 +157,9 @@ def rb_connect():
         
     if username in user_sessions:
         user_sessions[username]["connected"] = True
+        user_sessions[username]["game_data"] = data
     else:
-        user_sessions[username] = {"connected": True, "pending": None, "staged_code": None}
+        user_sessions[username] = {"connected": True, "pending": None, "staged_code": None, "game_data": data}
     return jsonify({"success": True})
 
 @app.route('/api/roblox/poll/<username>')
