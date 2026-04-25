@@ -1,4 +1,5 @@
 let currentUser = "";
+let hasShownNotification = false;
 
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
@@ -8,6 +9,51 @@ const connectionBanner = document.getElementById('connection-banner');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const chatMessages = document.getElementById('chat-messages');
+const copyScriptBtn = document.getElementById('copy-script-btn');
+const notificationToast = document.getElementById('notification-toast');
+const suggestionsContainer = document.getElementById('suggestions-container');
+
+// Show notification toast
+function showNotification() {
+    if (hasShownNotification) return;
+    hasShownNotification = true;
+    notificationToast.classList.remove('hidden');
+    // A small delay before animating in
+    setTimeout(() => {
+        notificationToast.classList.add('show');
+    }, 10);
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+        notificationToast.classList.remove('show');
+        setTimeout(() => {
+            notificationToast.classList.add('hidden');
+        }, 500); // Wait for transition
+    }, 4000);
+}
+
+// Fetch dynamic suggestions
+async function loadSuggestions() {
+    try {
+        const response = await fetch('/api/suggestions');
+        const data = await response.json();
+        
+        suggestionsContainer.innerHTML = ''; // Clear loading
+        
+        data.suggestions.forEach(suggestion => {
+            const btn = document.createElement('button');
+            btn.className = 'suggestion-btn';
+            btn.textContent = suggestion;
+            btn.addEventListener('click', () => {
+                chatInput.value = suggestion;
+                sendMessage();
+            });
+            suggestionsContainer.appendChild(btn);
+        });
+    } catch (e) {
+        console.error("Failed to load suggestions", e);
+    }
+}
 
 loginBtn.addEventListener('click', async () => {
     const username = usernameInput.value.trim().toLowerCase();
@@ -24,6 +70,7 @@ loginBtn.addEventListener('click', async () => {
             loginScreen.classList.add('hidden');
             chatScreen.classList.remove('hidden');
             startStatusPolling();
+            loadSuggestions(); // Load the AI suggestions
         }
     }
 });
@@ -37,6 +84,7 @@ async function startStatusPolling() {
             
             if (data.connected) {
                 connectionBanner.classList.add('hidden');
+                showNotification(); // Show the toast notification
             } else {
                 connectionBanner.classList.remove('hidden');
             }
@@ -95,3 +143,15 @@ function addMessage(text, sender, id = null) {
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+// Custom copy button logic for the JNKIE API link
+copyScriptBtn.addEventListener('click', () => {
+    const scriptToCopy = `loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/a807692946e8c7266832a7b0f42236dd8101bd9ef807c6cc074714639f007228/download"))()`;
+    
+    navigator.clipboard.writeText(scriptToCopy).then(() => {
+        copyScriptBtn.textContent = "Copied!";
+        setTimeout(() => {
+            copyScriptBtn.textContent = "Copy";
+        }, 2000);
+    });
+});
