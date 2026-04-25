@@ -14,11 +14,14 @@ if API_KEY:
     genai.configure(api_key=API_KEY)
 
 OPENAI_KEY = os.environ.get("OPENAI_KEY")
+STEPFUN_KEY = os.environ.get("STEPFUN_KEY")
 try:
     from openai import OpenAI
     openai_client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
+    stepfun_client = OpenAI(api_key=STEPFUN_KEY, base_url="https://api.stepfun.com/v1") if STEPFUN_KEY else None
 except ImportError:
     openai_client = None
+    stepfun_client = None
 
 user_sessions = {}
 # user_sessions structure:
@@ -163,9 +166,19 @@ def chat():
     """
     
     try:
-        if "gpt" in model_name:
+        if "step" in model_name.lower():
+            if not stepfun_client:
+                return jsonify({"error": "StepFun API Key not configured. Please set STEPFUN_KEY environment variable."}), 500
+            
+            response = stepfun_client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            text = response.choices[0].message.content
+        elif "gpt" in model_name.lower():
             if not openai_client:
-                return jsonify({"error": "OpenAI API Key not configured or openai package missing. Please set OPENAI_KEY environment variable and install openai package."}), 500
+                return jsonify({"error": "OpenAI API Key not configured. Please set OPENAI_KEY environment variable."}), 500
             
             response = openai_client.chat.completions.create(
                 model=model_name,
