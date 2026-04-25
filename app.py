@@ -31,10 +31,12 @@ def status(username):
 
 @app.route('/api/suggestions', methods=['GET'])
 def get_suggestions():
+    model_name = request.args.get('model', 'gemini-pro')
     try:
+        dynamic_model = genai.GenerativeModel(model_name)
         # Ask Gemini for 3 random exploit ideas
         prompt = "Generate 3 short button labels (maximum 3 words each) for a Roblox exploit UI. Separate them by commas. Only return the comma-separated list."
-        response = model.generate_content(prompt)
+        response = dynamic_model.generate_content(prompt)
         text = response.text.replace('"', '').replace('\n', '')
         suggestions = [s.strip() for s in text.split(',')]
         if len(suggestions) >= 3:
@@ -48,6 +50,7 @@ def chat():
     data = request.get_json(force=True)
     username = data.get('username', '').lower()
     message = data.get('message', '')
+    model_name = data.get('model', 'gemini-pro')
     
     prompt = f"""
     You are Snowy AI, an advanced AI assistant directly integrated into Roblox (similar to Antigravity).
@@ -61,7 +64,8 @@ def chat():
     """
     
     try:
-        response = model.generate_content(prompt)
+        dynamic_model = genai.GenerativeModel(model_name)
+        response = dynamic_model.generate_content(prompt)
         lua_code = response.text.replace("```lua", "").replace("```", "").strip()
         user_sessions[username]["pending"] = lua_code
         return jsonify({"success": True, "message": "Command sent to Roblox!"})
