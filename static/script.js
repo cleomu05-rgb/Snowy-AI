@@ -8,10 +8,9 @@ const connectionBanner = document.getElementById('connection-banner');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const chatMessages = document.getElementById('chat-messages');
-const copyScriptBtn = document.getElementById('copy-script-btn');
 
 loginBtn.addEventListener('click', async () => {
-    const username = usernameInput.value.trim();
+    const username = usernameInput.value.trim().toLowerCase();
     if (username) {
         currentUser = username;
         const response = await fetch('/api/login', {
@@ -32,15 +31,19 @@ loginBtn.addEventListener('click', async () => {
 async function startStatusPolling() {
     const poll = async () => {
         if (!currentUser) return;
-        const response = await fetch(`/api/status/${currentUser}`);
-        const data = await response.json();
-        
-        if (data.connected) {
-            connectionBanner.classList.add('hidden');
-        } else {
-            connectionBanner.classList.remove('hidden');
+        try {
+            const response = await fetch(`/api/status/${currentUser}`);
+            const data = await response.json();
+            
+            if (data.connected) {
+                connectionBanner.classList.add('hidden');
+            } else {
+                connectionBanner.classList.remove('hidden');
+            }
+        } catch (e) {
+            console.log("Waiting for connection...");
         }
-        setTimeout(poll, 3000);
+        setTimeout(poll, 2000); // Check every 2 seconds
     };
     poll();
 }
@@ -65,7 +68,6 @@ async function sendMessage() {
         
         const data = await response.json();
         
-        // Remove thinking message
         document.getElementById(thinkingId).remove();
 
         if (data.success) {
@@ -93,18 +95,3 @@ function addMessage(text, sender, id = null) {
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-copyScriptBtn.addEventListener('click', () => {
-    // Generate the script dynamically based on the current domain
-    const host = window.location.origin;
-    const script = `_G.Username = "${currentUser}"
-_G.ApiUrl = "${host}"
-loadstring(game:HttpGet("${host}/static/snowy_ai.lua"))()`;
-    
-    navigator.clipboard.writeText(script).then(() => {
-        copyScriptBtn.textContent = "Copied!";
-        setTimeout(() => {
-            copyScriptBtn.textContent = "Copy";
-        }, 2000);
-    });
-});
