@@ -63,15 +63,21 @@
                 <span>Snowy AI</span>
             </div>
             
-            <!-- Live Profile Block -->
-            <div id="live-profile" class="live-profile hidden">
-                <div class="profile-images">
-                    <img id="user-avatar" src="" alt="User" class="avatar-img">
-                    <img id="game-icon" src="" alt="Game" class="game-img">
+            <!-- Telemetry Container -->
+            <div id="live-telemetry" class="live-telemetry hidden">
+                <div class="telemetry-card">
+                    <img id="user-avatar" src="" alt="User">
+                    <div class="card-info">
+                        <span class="card-title">User</span>
+                        <span id="user-name-display" class="card-text">@username</span>
+                    </div>
                 </div>
-                <div class="profile-info">
-                    <span id="user-name-display">@username</span>
-                    <span id="game-name-display" class="game-text">Playing Unknown</span>
+                <div class="telemetry-card">
+                    <img id="game-icon" src="" alt="Game">
+                    <div class="card-info">
+                        <span class="card-title">Game</span>
+                        <span id="game-name-display" class="card-text">Playing Unknown</span>
+                    </div>
                 </div>
             </div>
             <div class="model-selector">
