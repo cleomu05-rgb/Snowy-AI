@@ -7,46 +7,52 @@ local requestFunc = (syn and syn.request) or (http and http.request) or http_req
 
 local player = Players.LocalPlayer
 local username = player.Name
+local userId = player.UserId
 local apiUrl = "https://snowy-ai.onrender.com"
 
 print("Snowy AI: Initialisation pour " .. username)
 
 -- Collect real game data
 local gameInfo = {
-    Name = "Unknown",
+    Name = "Unknown Game",
     Creator = "Unknown",
     Created = "Unknown",
     Updated = "Unknown",
     Description = "Unknown"
 }
 
-pcall(function()
-    local info = MarketplaceService:GetProductInfo(game.PlaceId)
-    if info then
-        gameInfo.Name = info.Name
-        gameInfo.Creator = info.Builder
-        gameInfo.Created = info.Created
-        gameInfo.Updated = info.Updated
-        gameInfo.Description = info.Description
-    end
+local success, info = pcall(function()
+    return MarketplaceService:GetProductInfo(game.PlaceId, Enum.InfoType.Asset)
 end)
+
+if success and info then
+    gameInfo.Name = info.Name
+    gameInfo.Creator = info.Builder
+    gameInfo.Created = info.Created
+    gameInfo.Updated = info.Updated
+    gameInfo.Description = info.Description
+end
 
 -- Scan workspace briefly
 local function getBasicHierarchy()
     local workspaceChildren = {}
-    for i, v in ipairs(game.Workspace:GetChildren()) do
-        if i <= 15 then -- Limit to 15 to avoid massive payload
-            table.insert(workspaceChildren, v.Name .. " (" .. v.ClassName .. ")")
+    local successW, _ = pcall(function()
+        for i, v in ipairs(game.Workspace:GetChildren()) do
+            if i <= 15 then 
+                table.insert(workspaceChildren, v.Name .. " (" .. v.ClassName .. ")")
+            end
         end
-    end
+    end)
     
     local remotes = {}
-    for _, v in ipairs(game.ReplicatedStorage:GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            table.insert(remotes, v.Name)
-            if #remotes > 15 then break end
+    local successR, _ = pcall(function()
+        for _, v in ipairs(game.ReplicatedStorage:GetDescendants()) do
+            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                table.insert(remotes, v.Name)
+                if #remotes > 15 then break end
+            end
         end
-    end
+    end)
     
     return {
         Workspace = workspaceChildren,
@@ -59,6 +65,7 @@ local function connect()
     
     local payload = {
         username = username,
+        userId = userId,
         placeId = game.PlaceId,
         gameName = gameInfo.Name,
         gameCreator = gameInfo.Creator,
@@ -69,7 +76,7 @@ local function connect()
         remotePreview = hierarchy.Remotes
     }
     
-    local success = false
+    local successReq = false
     if requestFunc then
         local res = requestFunc({
             Url = apiUrl .. "/api/roblox/connect",
@@ -77,7 +84,7 @@ local function connect()
             Headers = { ["Content-Type"] = "application/json" },
             Body = HttpService:JSONEncode(payload)
         })
-        success = res.Success
+        successReq = res.Success
     else
         local s, r = pcall(function()
             return HttpService:PostAsync(
@@ -86,10 +93,10 @@ local function connect()
                 Enum.HttpContentType.ApplicationJson
             )
         end)
-        success = s
+        successReq = s
     end
     
-    if success then
+    if successReq then
         print("Snowy AI: Connecté au site avec succès ! Télémetrie envoyée.")
     else
         warn("Snowy AI: Échec de connexion au site. Nouvelle tentative dans 5s...")
@@ -100,24 +107,24 @@ end
 
 local function pollCommands()
     while true do
-        local success, body = false, nil
+        local successPoll, body = false, nil
         
         if requestFunc then
             local res = requestFunc({
                 Url = apiUrl .. "/api/roblox/poll/" .. username,
                 Method = "GET"
             })
-            success = res.Success
+            successPoll = res.Success
             body = res.Body
         else
             local s, r = pcall(function()
                 return HttpService:GetAsync(apiUrl .. "/api/roblox/poll/" .. username)
             end)
-            success = s
+            successPoll = s
             body = r
         end
         
-        if success and body then
+        if successPoll and body then
             local data = HttpService:JSONDecode(body)
             if data and data.command then
                 print("Snowy AI: ANALYSED Request...")
