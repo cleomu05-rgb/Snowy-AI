@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snowy AI - Roblox Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="toast hidden">
+        <i class="fas fa-check-circle"></i>
+        <span>Connected to Roblox</span>
+    </div>
+
     <div id="login-screen" class="screen">
         <div class="login-container">
             <h1>Snowy AI</h1>
@@ -43,10 +49,8 @@
             </div>
         </div>
 
-        <div class="suggestions">
-            <button class="suggestion-btn">Speed hack toggle</button>
-            <button class="suggestion-btn">ESP all players</button>
-            <button class="suggestion-btn">Who am I?</button>
+        <div class="suggestions" id="suggestions-container">
+            <button class="suggestion-btn">Loading...</button>
         </div>
 
         <footer>
