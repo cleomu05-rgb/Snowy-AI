@@ -115,7 +115,20 @@ async function sendMessage() {
 
     // Add thinking message
     const thinkingId = 'thinking-' + Date.now();
-    addMessage("Snowy is thinking...", 'ai', thinkingId);
+    const thinkingMessage = ". . . Investigating";
+    addMessage(thinkingMessage, 'ai', thinkingId);
+    
+    // Animate the dots
+    let dotCount = 1;
+    const thinkingInterval = setInterval(() => {
+        const el = document.getElementById(thinkingId);
+        if (el) {
+            dotCount = (dotCount % 3) + 1;
+            el.textContent = Array(dotCount).fill('.').join(' ') + " Investigating";
+        } else {
+            clearInterval(thinkingInterval);
+        }
+    }, 500);
 
     const selectedModel = document.getElementById('model-select').value;
 
@@ -123,12 +136,14 @@ async function sendMessage() {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUser, message, model: selectedModel })
+            body: JSON.stringify({ username: currentUser, message: message, model: selectedModel })
         });
         
         const data = await response.json();
         
-        document.getElementById(thinkingId).remove();
+        clearInterval(thinkingInterval);
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) thinkingEl.remove();
 
         if (data.success) {
             addMessage(data.message, 'ai');
