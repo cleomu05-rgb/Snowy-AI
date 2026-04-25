@@ -23,7 +23,6 @@ const openSettingsBtn = document.getElementById('open-settings');
 const closeSettingsBtn = document.getElementById('close-settings');
 const fastModeToggle = document.getElementById('fast-mode-toggle');
 const directExecuteToggle = document.getElementById('direct-execute-toggle');
-const noTalkToggle = document.getElementById('no-talk-toggle');
 
 // Sidebar Elements
 const sidebar = document.getElementById('sidebar');
@@ -254,24 +253,46 @@ function createThinkingBlock(id) {
     title.classList.add('thinking-title');
     title.innerHTML = `
         <div class="dot-wave"><span></span><span></span><span></span></div>
-        Investigating
+        Investigating <span class="tools-count">14 tools</span>
+    `;
+    
+    const tools = document.createElement('div');
+    tools.classList.add('tools-pills');
+    const toolNames = ['roblox_get_remotes', 'roblox_search', 'roblox_get_children x9', 'roblox_get_properties', 'project_write_file', 'roblox_execute'];
+    toolNames.forEach(t => {
+        const pill = document.createElement('span');
+        pill.classList.add('tool-pill');
+        pill.textContent = t;
+        tools.appendChild(pill);
+    });
+
+    const stepsBox = document.createElement('div');
+    stepsBox.classList.add('steps-box');
+    stepsBox.innerHTML = `
+        <div class="steps-header"><i class="fas fa-list"></i> Steps (4/4)</div>
+        <div class="step-item"><i class="fas fa-check-circle"></i> Inspect live game context: Dig to Earth's CORE!</div>
+        <div class="step-item"><i class="fas fa-check-circle"></i> Map remotes, scripts, GUI, prompts, players</div>
+        <div class="step-item"><i class="fas fa-check-circle"></i> Pick the best exploit path</div>
+        <div class="step-item"><i class="fas fa-check-circle"></i> Build a strong targeted UI/tool</div>
     `;
     
     const logs = document.createElement('div');
     logs.classList.add('thinking-logs');
     
     div.appendChild(title);
+    div.appendChild(tools);
+    div.appendChild(stepsBox);
     div.appendChild(logs);
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
     const logMessages = [
-        "USED 'roblox_search' Scanning environment...",
-        "ANALYZED RemoteEvents loaded",
-        "USED 'roblox_get_children' Opening Workspace...",
-        "ANALYZED Looking for LocalScripts...",
-        "USED 'roblox_get_properties' Checking variables...",
-        "ANALYZED Compiling payload..."
+        "ANALYZED Children loaded: 0",
+        "ANALYZED Children loaded: 0",
+        "USED 'project_write_file' Saving project file: hub.luau",
+        "USED 'roblox_execute' Running Luau",
+        "ANALYZED Saved Session Scripts/hub.luau",
+        "ANALYZED Luau returned: ok"
     ];
     
     let index = 0;
@@ -286,7 +307,7 @@ function createThinkingBlock(id) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             index++;
         }
-    }, 800);
+    }, 600);
     
     return logInterval;
 }
@@ -352,7 +373,6 @@ async function sendMessage() {
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
     const directExecute = directExecuteToggle.checked;
-    const noTalk = noTalkToggle.checked;
 
     try {
         const response = await fetch('/api/chat', {
@@ -363,8 +383,7 @@ async function sendMessage() {
                 message: fullMessage, 
                 model: selectedModel,
                 fast_mode: fastMode,
-                direct_execute: directExecute,
-                no_talk: noTalk
+                direct_execute: directExecute
             })
         });
         
@@ -391,20 +410,31 @@ async function sendMessage() {
             }
 
             if (!directExecute && data.has_code) {
-                const authBtn = document.createElement('button');
-                authBtn.className = 'chat-action-btn';
-                authBtn.textContent = 'Authorize Execution on Roblox';
-                authBtn.onclick = async () => {
-                    authBtn.textContent = 'Executing...';
+                const execPrompt = document.createElement('div');
+                execPrompt.classList.add('execute-prompt-box');
+                execPrompt.innerHTML = `
+                    <div class="exec-title"><i class="fas fa-terminal"></i> Execute script?</div>
+                    <div class="exec-actions">
+                        <button class="exec-run-btn"><i class="fas fa-play"></i> Run</button>
+                        <button class="exec-dismiss-btn"><i class="fas fa-times"></i> Dismiss</button>
+                    </div>
+                `;
+                
+                execPrompt.querySelector('.exec-run-btn').onclick = async () => {
+                    execPrompt.querySelector('.exec-run-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
                     await fetch('/api/authorize_execute', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({username: currentUser})
                     });
-                    authBtn.textContent = 'Executed!';
-                    authBtn.disabled = true;
+                    execPrompt.innerHTML = '<div class="exec-success"><i class="fas fa-check"></i> Script Executed</div>';
                 };
-                if (messageDiv) messageDiv.appendChild(authBtn);
+                
+                execPrompt.querySelector('.exec-dismiss-btn').onclick = () => {
+                    execPrompt.remove();
+                };
+                
+                if (messageDiv) messageDiv.appendChild(execPrompt);
             }
 
         } else {
