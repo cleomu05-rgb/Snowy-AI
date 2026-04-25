@@ -13,6 +13,13 @@ API_KEY = os.environ.get("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
+OPENAI_KEY = os.environ.get("OPENAI_KEY")
+try:
+    from openai import OpenAI
+    openai_client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
+except ImportError:
+    openai_client = None
+
 user_sessions = {}
 # user_sessions structure:
 # { "username": { "connected": bool, "last_poll": 0, "pending": "code string", "staged_code": "code string", "game_data": {} } }
@@ -156,9 +163,20 @@ def chat():
     """
     
     try:
-        dynamic_model = genai.GenerativeModel(model_name)
-        response = dynamic_model.generate_content(prompt)
-        text = response.text
+        if "gpt" in model_name:
+            if not openai_client:
+                return jsonify({"error": "OpenAI API Key not configured or openai package missing. Please set OPENAI_KEY environment variable and install openai package."}), 500
+            
+            response = openai_client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            text = response.choices[0].message.content
+        else:
+            dynamic_model = genai.GenerativeModel(model_name)
+            response = dynamic_model.generate_content(prompt)
+            text = response.text
         
         reply_message = "Command sent to Roblox!"
         lua_code = ""
