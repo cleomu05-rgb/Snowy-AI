@@ -7,7 +7,7 @@ app = Flask(__name__)
 # --- CONFIGURATION API ---
 API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyA6iaB7pLIMypL5ieKlsJ6ibAbm2rQc_eM")
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 user_sessions = {}
 
@@ -17,8 +17,9 @@ def index():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    username = request.json.get('username').lower()
-    if username not in user_sessions:
+    data = request.get_json(force=True)
+    username = data.get('username', '').lower()
+    if username and username not in user_sessions:
         user_sessions[username] = {"connected": False, "pending": None}
     return jsonify({"success": True})
 
@@ -29,8 +30,9 @@ def status(username):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    username = request.json.get('username').lower()
-    message = request.json.get('message')
+    data = request.get_json(force=True)
+    username = data.get('username', '').lower()
+    message = data.get('message', '')
     
     prompt = f"You are Snowy AI. The user wants a Roblox script for: {message}. Return ONLY the Lua code. No code blocks, no text."
     
@@ -44,7 +46,11 @@ def chat():
 
 @app.route('/api/roblox/connect', methods=['POST'])
 def rb_connect():
-    username = request.json.get('username').lower()
+    data = request.get_json(force=True)
+    username = data.get('username', '').lower()
+    if not username:
+        return jsonify({"error": "No username provided"}), 400
+        
     if username in user_sessions:
         user_sessions[username]["connected"] = True
     else:
