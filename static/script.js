@@ -1,6 +1,8 @@
 let currentUser = "";
 let hasShownNotification = false;
 let uploadedFileContent = null;
+let currentChatId = null;
+let userChats = {}; // Format: { "chat_id": { title: "Title", messages: [ {sender: "user", text: "..."} ] } }
 
 // UI Elements
 const loginScreen = document.getElementById('login-screen');
@@ -21,16 +23,80 @@ const openSettingsBtn = document.getElementById('open-settings');
 const closeSettingsBtn = document.getElementById('close-settings');
 const fastModeToggle = document.getElementById('fast-mode-toggle');
 const directExecuteToggle = document.getElementById('direct-execute-toggle');
+const noTalkToggle = document.getElementById('no-talk-toggle');
+
+// Sidebar Elements
+const sidebar = document.getElementById('sidebar');
+const openSidebarBtn = document.getElementById('open-sidebar');
+const closeSidebarBtn = document.getElementById('close-sidebar');
+const newChatBtn = document.getElementById('new-chat-btn');
+const chatHistoryList = document.getElementById('chat-history-list');
 
 // File Upload Elements
 const fileUpload = document.getElementById('file-upload');
 const filePreview = document.getElementById('file-preview');
 
-// Settings Modal Logic
+// --- CHAT HISTORY LOGIC ---
+function loadChatHistory() {
+    if (!currentUser) return;
+    const saved = localStorage.getItem(`snowy_chats_${currentUser}`);
+    if (saved) {
+        userChats = JSON.parse(saved);
+    } else {
+        userChats = {};
+    }
+    renderSidebar();
+}
+
+function saveChatHistory() {
+    if (!currentUser) return;
+    localStorage.setItem(`snowy_chats_${currentUser}`, JSON.stringify(userChats));
+    renderSidebar();
+}
+
+function renderSidebar() {
+    chatHistoryList.innerHTML = '';
+    const chatIds = Object.keys(userChats).sort((a, b) => b - a); // sort by newest first
+    
+    chatIds.forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = `chat-item ${id === currentChatId ? 'active' : ''}`;
+        btn.textContent = userChats[id].title || "New Chat";
+        btn.onclick = () => loadChat(id);
+        chatHistoryList.appendChild(btn);
+    });
+}
+
+function createNewChat() {
+    currentChatId = Date.now().toString();
+    userChats[currentChatId] = { title: "New Chat", messages: [] };
+    chatMessages.innerHTML = ''; // clear UI
+    saveChatHistory();
+    sidebar.classList.remove('open');
+}
+
+function loadChat(id) {
+    if (!userChats[id]) return;
+    currentChatId = id;
+    chatMessages.innerHTML = '';
+    
+    userChats[id].messages.forEach(msg => {
+        addMessage(msg.text, msg.sender, null, true); // true = don't save to history again
+    });
+    
+    saveChatHistory(); // updates active class in sidebar
+    sidebar.classList.remove('open');
+}
+
+// --- MODALS & SIDEBAR ---
 openSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
 closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
-// File Upload Logic
+openSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
+closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+newChatBtn.addEventListener('click', createNewChat);
+
+// --- FILE UPLOAD LOGIC ---
 fileUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -44,7 +110,7 @@ fileUpload.addEventListener('change', (e) => {
     }
 });
 
-// Show notification toast
+// --- NOTIFICATION ---
 function showNotification() {
     if (hasShownNotification) return;
     hasShownNotification = true;
@@ -56,7 +122,7 @@ function showNotification() {
     }, 4000);
 }
 
-// Fetch dynamic suggestions
+// --- SUGGESTIONS ---
 async function loadSuggestions() {
     try {
         const selectedModel = document.getElementById('model-select').value;
@@ -79,6 +145,7 @@ async function loadSuggestions() {
     }
 }
 
+// --- LOGIN ---
 loginBtn.addEventListener('click', async () => {
     const username = usernameInput.value.trim().toLowerCase();
     if (username) {
@@ -93,6 +160,14 @@ loginBtn.addEventListener('click', async () => {
         if (data.success) {
             loginScreen.classList.add('hidden');
             chatScreen.classList.remove('hidden');
+            loadChatHistory();
+            if (Object.keys(userChats).length === 0) {
+                createNewChat();
+            } else {
+                // Load most recent chat by default
+                const chatIds = Object.keys(userChats).sort((a, b) => b - a);
+                loadChat(chatIds[0]);
+            }
             startStatusPolling();
             loadSuggestions();
         }
@@ -106,6 +181,7 @@ document.getElementById('model-select').addEventListener('change', () => {
     }
 });
 
+// --- STATUS POLLING ---
 async function startStatusPolling() {
     const poll = async () => {
         if (!currentUser) return;
@@ -141,6 +217,7 @@ async function startStatusPolling() {
     poll();
 }
 
+// --- THINKING BLOCK ---
 function createThinkingBlock(id) {
     const div = document.createElement('div');
     div.classList.add('ai-thinking-block');
@@ -161,7 +238,6 @@ function createThinkingBlock(id) {
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Simulate Antigravity logs
     const logMessages = [
         "USED 'roblox_search' Scanning environment...",
         "ANALYZED RemoteEvents loaded",
@@ -188,23 +264,21 @@ function createThinkingBlock(id) {
     return logInterval;
 }
 
+// --- MESSAGE ACTIONS ---
 function createMessageActions(text) {
     const actions = document.createElement('div');
     actions.classList.add('message-actions');
     
-    // Copy
     const copyBtn = document.createElement('button');
     copyBtn.className = 'action-btn';
     copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
     copyBtn.onclick = () => navigator.clipboard.writeText(text);
     
-    // Reply
     const replyBtn = document.createElement('button');
     replyBtn.className = 'action-btn';
     replyBtn.innerHTML = '<i class="fas fa-reply"></i> Reply';
     replyBtn.onclick = () => chatInput.focus();
     
-    // Fix
     const fixBtn = document.createElement('button');
     fixBtn.className = 'action-btn';
     fixBtn.innerHTML = '<i class="fas fa-wrench"></i> Fix';
@@ -219,10 +293,21 @@ function createMessageActions(text) {
     return actions;
 }
 
+// --- CORE CHAT ---
 async function sendMessage() {
     let messageText = chatInput.value.trim();
     if (!messageText && !uploadedFileContent) return;
     if (!currentUser) return;
+
+    if (!currentChatId || !userChats[currentChatId]) {
+        createNewChat();
+    }
+
+    // Set title of chat based on first message
+    if (userChats[currentChatId].messages.length === 0) {
+        userChats[currentChatId].title = messageText ? messageText.substring(0, 20) : "Attached File";
+        renderSidebar();
+    }
 
     let fullMessage = messageText;
     if (uploadedFileContent) {
@@ -240,7 +325,7 @@ async function sendMessage() {
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
     const directExecute = directExecuteToggle.checked;
-    const noTalk = document.getElementById('no-talk-toggle').checked;
+    const noTalk = noTalkToggle.checked;
 
     try {
         const response = await fetch('/api/chat', {
@@ -270,17 +355,14 @@ async function sendMessage() {
             } else if (!data.has_code) {
                 messageDiv = addMessage("Done.", 'ai');
             } else {
-                // If it's pure code and no_talk is on, just show a minimal response
                 messageDiv = addMessage("Script Generated & Sent.", 'ai');
             }
             
-            // Check if download was requested
             if (data.download_file) {
                 downloadFile(data.download_file.filename, data.download_file.content);
                 addMessage(`Saved ${data.download_file.filename} to your device.`, 'ai');
             }
 
-            // If not direct execute, show authorize button
             if (!directExecute && data.has_code) {
                 const authBtn = document.createElement('button');
                 authBtn.className = 'chat-action-btn';
@@ -318,13 +400,12 @@ function downloadFile(filename, content) {
     document.body.removeChild(element);
 }
 
-function addMessage(text, sender, id = null) {
+function addMessage(text, sender, id = null, isHistoryLoad = false) {
     const div = document.createElement('div');
     div.classList.add('message');
     div.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
     if (id) div.id = id;
     
-    // Format text briefly (convert newlines)
     const textNode = document.createElement('span');
     textNode.innerHTML = text.replace(/\n/g, '<br>');
     div.appendChild(textNode);
@@ -335,6 +416,12 @@ function addMessage(text, sender, id = null) {
     
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    if (!isHistoryLoad && currentChatId && userChats[currentChatId]) {
+        userChats[currentChatId].messages.push({ sender, text });
+        saveChatHistory();
+    }
+    
     return div;
 }
 
@@ -343,7 +430,6 @@ chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
 });
 
-// Custom copy button logic for the JNKIE API link
 copyScriptBtn.addEventListener('click', () => {
     const scriptToCopy = `loadstring(game:HttpGet("https://raw.githubusercontent.com/cleomu05-rgb/script/refs/heads/main/roblox/antigravity"))()`;
     navigator.clipboard.writeText(scriptToCopy).then(() => {
