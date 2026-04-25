@@ -7,7 +7,8 @@ app = Flask(__name__)
 # --- CONFIGURATION API ---
 API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyA6iaB7pLIMypL5ieKlsJ6ibAbm2rQc_eM")
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+# We use gemini-1.5-flash (without -latest to avoid 404) or fallback to gemini-pro if needed
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 user_sessions = {}
 
@@ -27,6 +28,20 @@ def login():
 def status(username):
     user = user_sessions.get(username.lower())
     return jsonify({"connected": user["connected"] if user else False})
+
+@app.route('/api/suggestions', methods=['GET'])
+def get_suggestions():
+    try:
+        # Ask Gemini for 3 random exploit ideas
+        prompt = "Generate 3 short button labels (maximum 3 words each) for a Roblox exploit UI. Separate them by commas. Only return the comma-separated list."
+        response = model.generate_content(prompt)
+        text = response.text.replace('"', '').replace('\n', '')
+        suggestions = [s.strip() for s in text.split(',')]
+        if len(suggestions) >= 3:
+            return jsonify({"suggestions": suggestions[:3]})
+    except Exception as e:
+        print("Suggestion error:", e)
+    return jsonify({"suggestions": ["Aimbot", "Infinite Jump", "God Mode"]})
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
