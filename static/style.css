@@ -33,6 +33,37 @@ body {
     display: none !important;
 }
 
+/* Toast Notification */
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: rgba(30, 30, 30, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast i {
+    color: #10b981; /* Success green */
+    font-size: 1.1rem;
+}
+
 /* Login Screen */
 .screen {
     width: 100%;
@@ -160,7 +191,7 @@ main {
     gap: 1.5rem;
 }
 
-/* Banner Styling - matching the image exactly */
+/* Banner Styling */
 .banner {
     background: rgba(25, 25, 25, 0.8);
     backdrop-filter: blur(10px);
@@ -174,6 +205,12 @@ main {
     font-size: 0.85rem;
     color: #ccc;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
 }
 
 .banner i {
@@ -316,4 +353,3 @@ footer {
     color: #eee;
     border-bottom-left-radius: 4px;
 }
-
