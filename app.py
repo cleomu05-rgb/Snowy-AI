@@ -117,7 +117,6 @@ def chat():
     message = data.get('message', '')
     model_name = data.get('model', 'gemini-pro')
     direct_execute = data.get('direct_execute', True)
-    no_talk = data.get('no_talk', False)
     
     user_data = user_sessions.get(username, {})
     game_context = ""
@@ -143,33 +142,26 @@ def chat():
     
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
 
-    if no_talk:
-        response_format = "RESPONSE: [Executed]"
-        extra_rule = "5. You are in NO TALK MODE. Do NOT provide any conversational text, explanations, or warnings. You must ONLY output `RESPONSE: [Executed]` followed by the CODE block containing the exploit."
-    else:
-        response_format = "RESPONSE: [Explain your analysis or what you created conversationally.]"
-        extra_rule = ""
-
     prompt = f"""
-    You are Snowy AI, a highly advanced Roblox exploit generator and game analyzer (similar to Antigravity).
+    You are Snowy AI, an extremely advanced, autonomous Roblox Exploit Developer AI (Agentic AI).
     The user wants: {message}
     
     Here is the REAL, live data from the user's current Roblox session:
     {game_context}
     
-    You MUST format your response EXACTLY like this:
-    {response_format}
-    CODE:
-    ```lua
-    -- Write your Lua code here
-    ```
+    Your goal is to provide HIGHLY CAPABLE, OP, AND FLAWLESS Lua code for modern Roblox executors.
+    If the user asks for a UI or Hub, YOU MUST use a UI library like Orion Library or Rayfield to build a stunning, fully-functional cheat menu.
+    If the user asks to hack the game, USE the LIVE ROBLOX GAME CONTEXT (Remotes, Workspace items) to create actual game-breaking or highly advantageous exploits (like auto-farms, kill all, give money, etc. if remotes exist).
     
     RULES:
-    1. If the user asks for "game info" or information about the game, USE YOUR VAST INTERNET KNOWLEDGE to explain the Roblox game "{game_name_for_search}". Tell them the goal of the game, creator info, release date, and general tips. If the LIVE CONTEXT above is valid, incorporate it. DO NOT just say "I don't have this data". You are a smart AI, you know what {game_name_for_search} is.
-    2. If the user asks to "explore" or "analyze", write a Lua script that targets the specific objects or Remotes listed in the preview, and print results using `print("ANALYZED : Found -> " .. item.Name)`
-    3. The CODE section must contain ONLY valid Lua code. No markdown outside the block.
-    4. Write efficient and working exploit code for modern executors.
-    {extra_rule}
+    1. You MUST wrap your final script inside a CODE block exactly like this:
+    ```lua
+    -- Your OP script here
+    ```
+    2. USE `pcall` when firing remotes or doing risky actions so the script doesn't crash the executor.
+    3. If creating a Hub, ALWAYS add multiple tabs and toggles, even if you have to guess some standard features like WalkSpeed, JumpPower, ESP.
+    4. Write a brief, confident, and professional agentic response before the code block. Explain the tools you 'used' (e.g. `roblox_get_remotes`, `roblox_search`) in a hacker/agentic style.
+    5. The script MUST work flawlessly. No placeholders.
     """
     
     try:
