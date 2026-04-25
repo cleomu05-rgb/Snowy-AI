@@ -6,11 +6,12 @@ app = Flask(__name__)
 
 # --- CONFIGURATION API ---
 API_KEY = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=API_KEY)
-# We use gemini-pro because your API key doesn't have access to the 1.5 models
-model = genai.GenerativeModel('gemini-pro')
+if API_KEY:
+    genai.configure(api_key=API_KEY)
 
 user_sessions = {}
+# user_sessions structure:
+# { "username": { "connected": bool, "pending": "code string", "staged_code": "code string" } }
 
 @app.route('/')
 def index():
@@ -21,7 +22,7 @@ def login():
     data = request.get_json(force=True)
     username = data.get('username', '').lower()
     if username and username not in user_sessions:
-        user_sessions[username] = {"connected": False, "pending": None}
+        user_sessions[username] = {"connected": False, "pending": None, "staged_code": None}
     return jsonify({"success": True})
 
 @app.route('/api/status/<username>')
@@ -34,15 +35,14 @@ def get_suggestions():
     model_name = request.args.get('model', 'gemini-pro')
     try:
         dynamic_model = genai.GenerativeModel(model_name)
-        # Ask Gemini for 3 random exploit ideas
-        prompt = "Generate 3 short button labels (maximum 3 words each) for a Roblox exploit UI. Separate them by commas. Only return the comma-separated list."
+        prompt = "Generate 3 short button labels (max 3 words) for a Roblox exploit UI. Separate by commas. Only return the list."
         response = dynamic_model.generate_content(prompt)
         text = response.text.replace('"', '').replace('\n', '')
         suggestions = [s.strip() for s in text.split(',')]
         if len(suggestions) >= 3:
             return jsonify({"suggestions": suggestions[:3]})
     except Exception as e:
-        print("Suggestion error:", e)
+        pass
     return jsonify({"suggestions": ["Aimbot", "Infinite Jump", "God Mode"]})
 
 @app.route('/api/chat', methods=['POST'])
@@ -51,7 +51,11 @@ def chat():
     username = data.get('username', '').lower()
     message = data.get('message', '')
     model_name = data.get('model', 'gemini-pro')
+    direct_execute = data.get('direct_execute', True)
     
+    # If the user asked to put it in a lua file
+    wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
+
     prompt = f"""
     You are Snowy AI, a highly advanced Roblox exploit generator and game analyzer (similar to Antigravity).
     The user wants: {message}
@@ -82,17 +86,44 @@ def chat():
             reply_message = parts[0].replace("RESPONSE:", "").strip()
             lua_code = parts[1].replace("```lua", "").replace("```", "").strip()
         else:
-            # Fallback
             reply_message = "Here is what I generated:"
             if "```lua" in text:
                 lua_code = text.split("```lua")[1].split("```")[0].strip()
             else:
                 lua_code = text.strip()
                 
-        user_sessions[username]["pending"] = lua_code
-        return jsonify({"success": True, "message": reply_message})
+        download_data = None
+        if wants_file:
+            download_data = {
+                "filename": "snowy_ai_script.lua",
+                "content": lua_code
+            }
+            reply_message += "\n(I have also generated the file for you to download!)"
+
+        if direct_execute:
+            user_sessions[username]["pending"] = lua_code
+        else:
+            user_sessions[username]["staged_code"] = lua_code
+            
+        return jsonify({
+            "success": True, 
+            "message": reply_message,
+            "has_code": bool(lua_code),
+            "download_file": download_data
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/authorize_execute', methods=['POST'])
+def authorize_execute():
+    data = request.get_json(force=True)
+    username = data.get('username', '').lower()
+    
+    if username in user_sessions and user_sessions[username].get("staged_code"):
+        user_sessions[username]["pending"] = user_sessions[username]["staged_code"]
+        user_sessions[username]["staged_code"] = None
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "No staged code found"})
 
 @app.route('/api/roblox/connect', methods=['POST'])
 def rb_connect():
@@ -104,13 +135,13 @@ def rb_connect():
     if username in user_sessions:
         user_sessions[username]["connected"] = True
     else:
-        user_sessions[username] = {"connected": True, "pending": None}
+        user_sessions[username] = {"connected": True, "pending": None, "staged_code": None}
     return jsonify({"success": True})
 
 @app.route('/api/roblox/poll/<username>')
 def rb_poll(username):
     user = user_sessions.get(username.lower())
-    if user and user["pending"]:
+    if user and user.get("pending"):
         cmd = user["pending"]
         user["pending"] = None
         return jsonify({"command": cmd})
