@@ -13,6 +13,23 @@ API_KEY = os.environ.get("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
+def fetch_openai_chat(api_key, base_url, model, prompt):
+    url = f"{base_url.rstrip('/')}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7
+    }
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers=headers)
+    resp = urllib.request.urlopen(req, timeout=15)
+    result = json.loads(resp.read())
+    return result["choices"][0]["message"]["content"]
+
 user_sessions = {}
 # user_sessions structure:
 # { "username": { "connected": bool, "last_poll": 0, "pending": "code string", "staged_code": "code string", "game_data": {} } }
@@ -162,34 +179,20 @@ def chat():
                 return jsonify({"error": "StepFun API Key not configured. Please set STEPFUN_KEY in Render."}), 500
             
             try:
-                from openai import OpenAI
-                client = OpenAI(api_key=step_key, base_url="https://api.stepfun.com/v1")
-            except ImportError:
-                return jsonify({"error": "openai package missing. Check requirements.txt"}), 500
+                text = fetch_openai_chat(step_key, "https://api.stepfun.com/v1", model_name, prompt)
+            except Exception as e:
+                return jsonify({"error": f"API Request failed: {str(e)}"}), 500
                 
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
-            text = response.choices[0].message.content
         elif "gpt" in model_name.lower():
             openai_key = os.environ.get("OPENAI_KEY")
             if not openai_key:
                 return jsonify({"error": "OpenAI API Key not configured. Please set OPENAI_KEY in Render."}), 500
             
             try:
-                from openai import OpenAI
-                client = OpenAI(api_key=openai_key)
-            except ImportError:
-                return jsonify({"error": "openai package missing. Check requirements.txt"}), 500
+                text = fetch_openai_chat(openai_key, "https://api.openai.com/v1", model_name, prompt)
+            except Exception as e:
+                return jsonify({"error": f"API Request failed: {str(e)}"}), 500
                 
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
-            text = response.choices[0].message.content
         else:
             dynamic_model = genai.GenerativeModel(model_name)
             response = dynamic_model.generate_content(prompt)
