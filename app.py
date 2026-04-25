@@ -149,19 +149,21 @@ def chat():
     Here is the REAL, live data from the user's current Roblox session:
     {game_context}
     
-    Your goal is to provide HIGHLY CAPABLE, OP, AND FLAWLESS Lua code for modern Roblox executors.
-    If the user asks for a UI or Hub, YOU MUST use a UI library like Orion Library or Rayfield to build a stunning, fully-functional cheat menu.
-    If the user asks to hack the game, USE the LIVE ROBLOX GAME CONTEXT (Remotes, Workspace items) to create actual game-breaking or highly advantageous exploits (like auto-farms, kill all, give money, etc. if remotes exist).
+    [MISSION]
+    Analyze the [PRIORITY] items and [REMOTE EVENTS] provided in the context to create an ELITE exploit.
+    - If you see items like 'Treasure', 'Coin', or 'Egg' in the [PRIORITY] list, write a high-performance auto-collect or auto-farm script.
+    - Use the Full Paths provided in the context (e.g., game.Workspace.Folder.Item) to ensure the script never fails.
+    - If no specific interesting items are found, provide a powerful universal script (Infinite Jump, Fly, Speed) but always try to customize it for the game "{game_name_for_search}".
     
-    RULES:
-    1. You MUST wrap your final script inside a CODE block exactly like this:
+    [UI/HUB]
+    If a Hub or GUI is requested, you MUST use Orion Library or Rayfield Library. Create multiple tabs (Main, Combat, Teleports, Misc) and add toggles for all generated exploits.
+    
+    [STYLE]
+    Respond like a top-tier hacking AI. Be concise but technical.
+    Wrap your Lua code in a standard markdown block:
     ```lua
     -- Your OP script here
     ```
-    2. USE `pcall` when firing remotes or doing risky actions so the script doesn't crash the executor.
-    3. If creating a Hub, ALWAYS add multiple tabs and toggles, even if you have to guess some standard features like WalkSpeed, JumpPower, ESP.
-    4. Write a brief, confident, and professional agentic response before the code block. Explain the tools you 'used' (e.g. `roblox_get_remotes`, `roblox_search`) in a hacker/agentic style.
-    5. The script MUST work flawlessly. No placeholders.
     """
     
     try:
@@ -193,17 +195,22 @@ def chat():
         reply_message = "Command sent to Roblox!"
         lua_code = ""
         
-        if "CODE:" in text:
+        if "```lua" in text:
+            parts = text.split("```lua")
+            reply_message = parts[0].strip()
+            lua_code = parts[1].split("```")[0].strip()
+        elif "CODE:" in text:
             parts = text.split("CODE:")
             reply_message = parts[0].replace("RESPONSE:", "").strip()
             lua_code = parts[1].replace("```lua", "").replace("```", "").strip()
         else:
-            reply_message = "Here is what I generated:"
-            if "```lua" in text:
-                lua_code = text.split("```lua")[1].split("```")[0].strip()
-            else:
-                lua_code = text.strip()
-                
+            reply_message = "I have analyzed the game and generated this script for you:"
+            lua_code = text.strip()
+            
+        # Clean up reply_message if it's empty
+        if not reply_message:
+            reply_message = "Script generated and analyzed."
+            
         download_data = None
         if wants_file:
             download_data = {
