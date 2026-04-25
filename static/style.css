@@ -301,6 +301,63 @@ header {
     filter: drop-shadow(0 0 8px var(--accent-color));
 }
 
+/* Live Profile Block */
+.live-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(30, 30, 30, 0.6);
+    border: 1px solid var(--border-color);
+    padding: 6px 16px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.profile-images {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 50px;
+}
+
+.avatar-img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #222;
+    position: absolute;
+    left: 0;
+    z-index: 2;
+}
+
+.game-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid #222;
+    position: absolute;
+    left: 20px;
+    top: 3px;
+    z-index: 1;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#user-name-display {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #eee;
+}
+
+.game-text {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
 .model-selector select {
     background: rgba(30, 30, 30, 0.8);
     color: #fff;
