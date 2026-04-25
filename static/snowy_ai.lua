@@ -31,6 +31,12 @@ if success and info then
     gameInfo.Created = info.Created
     gameInfo.Updated = info.Updated
     gameInfo.Description = info.Description
+else
+    -- Fallback si le MarketplaceService est bloqué par l'exécuteur ou si le PlaceId est invalide
+    gameInfo.Name = game.Name
+    if gameInfo.Name == "Game" then
+        gameInfo.Name = "Unknown Roblox Game (PlaceId: " .. tostring(game.PlaceId) .. ")"
+    end
 end
 
 -- Scan workspace briefly
