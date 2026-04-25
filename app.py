@@ -53,22 +53,44 @@ def chat():
     model_name = data.get('model', 'gemini-pro')
     
     prompt = f"""
-    You are Snowy AI, an advanced AI assistant directly integrated into Roblox (similar to Antigravity).
+    You are Snowy AI, an advanced AI assistant directly integrated into Roblox.
     Your job is to explore game files, create exploits, and manipulate the game environment based on the user's request.
     The user wants: {message}
     
+    You MUST format your response EXACTLY like this:
+    RESPONSE: [Explain briefly and conversationally what you created. Example: "I created a GUI with a button. When you press it, it enables infinite jump!"]
+    CODE:
+    ```lua
+    -- Write robust, working Roblox Lua code here
+    ```
+    
     RULES:
-    1. Reply ONLY with valid Roblox Lua code. NO markdown blocks (```lua), NO conversational text.
-    2. Write efficient exploit code using standard functions if needed.
-    3. If asked to analyze or explore, write code that prints information using `print("ANALYSED: [information]")`.
+    1. The CODE section must contain ONLY valid Lua code.
+    2. Write efficient and working exploit code for modern executors.
     """
     
     try:
         dynamic_model = genai.GenerativeModel(model_name)
         response = dynamic_model.generate_content(prompt)
-        lua_code = response.text.replace("```lua", "").replace("```", "").strip()
+        text = response.text
+        
+        reply_message = "Command sent to Roblox!"
+        lua_code = ""
+        
+        if "CODE:" in text:
+            parts = text.split("CODE:")
+            reply_message = parts[0].replace("RESPONSE:", "").strip()
+            lua_code = parts[1].replace("```lua", "").replace("```", "").strip()
+        else:
+            # Fallback
+            reply_message = "Here is what I generated:"
+            if "```lua" in text:
+                lua_code = text.split("```lua")[1].split("```")[0].strip()
+            else:
+                lua_code = text.strip()
+                
         user_sessions[username]["pending"] = lua_code
-        return jsonify({"success": True, "message": "Command sent to Roblox!"})
+        return jsonify({"success": True, "message": reply_message})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
