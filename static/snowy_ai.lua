@@ -25,12 +25,16 @@ local success, info = pcall(function()
     return MarketplaceService:GetProductInfo(game.PlaceId, Enum.InfoType.Asset)
 end)
 
-if success and info then
-    gameInfo.Name = info.Name
-    gameInfo.Creator = info.Builder
-    gameInfo.Created = info.Created
-    gameInfo.Updated = info.Updated
-    gameInfo.Description = info.Description
+if success and type(info) == "table" then
+    gameInfo.Name = info.Name or gameInfo.Name
+    if info.Creator and type(info.Creator) == "table" then
+        gameInfo.Creator = info.Creator.Name or gameInfo.Creator
+    else
+        gameInfo.Creator = info.Builder or gameInfo.Creator
+    end
+    gameInfo.Created = info.Created or gameInfo.Created
+    gameInfo.Updated = info.Updated or gameInfo.Updated
+    gameInfo.Description = info.Description or gameInfo.Description
 else
     -- Fallback si le MarketplaceService est bloqué par l'exécuteur ou si le PlaceId est invalide
     gameInfo.Name = game.Name
@@ -73,13 +77,13 @@ local function connect()
         username = username,
         userId = userId,
         placeId = game.PlaceId,
-        gameName = gameInfo.Name,
-        gameCreator = gameInfo.Creator,
-        gameCreated = gameInfo.Created,
-        gameUpdated = gameInfo.Updated,
-        gameDescription = gameInfo.Description,
-        workspacePreview = hierarchy.Workspace,
-        remotePreview = hierarchy.Remotes
+        gameName = gameInfo.Name or "Unknown",
+        gameCreator = gameInfo.Creator or "Unknown",
+        gameCreated = gameInfo.Created or "Unknown",
+        gameUpdated = gameInfo.Updated or "Unknown",
+        gameDescription = gameInfo.Description or "Unknown",
+        workspacePreview = hierarchy.Workspace or {},
+        remotePreview = hierarchy.Remotes or {}
     }
     
     local successReq = false
