@@ -240,6 +240,7 @@ async function sendMessage() {
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
     const directExecute = directExecuteToggle.checked;
+    const noTalk = document.getElementById('no-talk-toggle').checked;
 
     try {
         const response = await fetch('/api/chat', {
@@ -250,7 +251,8 @@ async function sendMessage() {
                 message: fullMessage, 
                 model: selectedModel,
                 fast_mode: fastMode,
-                direct_execute: directExecute
+                direct_execute: directExecute,
+                no_talk: noTalk
             })
         });
         
@@ -261,7 +263,16 @@ async function sendMessage() {
 
         if (data.success) {
             let finalMessage = data.message;
-            const messageDiv = addMessage(finalMessage, 'ai');
+            let messageDiv = null;
+            
+            if (finalMessage.trim() !== "" && finalMessage.trim() !== "[Executed]") {
+                messageDiv = addMessage(finalMessage, 'ai');
+            } else if (!data.has_code) {
+                messageDiv = addMessage("Done.", 'ai');
+            } else {
+                // If it's pure code and no_talk is on, just show a minimal response
+                messageDiv = addMessage("Script Generated & Sent.", 'ai');
+            }
             
             // Check if download was requested
             if (data.download_file) {
@@ -284,7 +295,7 @@ async function sendMessage() {
                     authBtn.textContent = 'Executed!';
                     authBtn.disabled = true;
                 };
-                messageDiv.appendChild(authBtn);
+                if (messageDiv) messageDiv.appendChild(authBtn);
             }
 
         } else {
