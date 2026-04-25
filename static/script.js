@@ -59,12 +59,39 @@ function renderSidebar() {
     const chatIds = Object.keys(userChats).sort((a, b) => b - a); // sort by newest first
     
     chatIds.forEach(id => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `chat-item-container ${id === currentChatId ? 'active' : ''}`;
+        
         const btn = document.createElement('button');
-        btn.className = `chat-item ${id === currentChatId ? 'active' : ''}`;
+        btn.className = 'chat-item-btn';
         btn.textContent = userChats[id].title || "New Chat";
         btn.onclick = () => loadChat(id);
-        chatHistoryList.appendChild(btn);
+        
+        const delBtn = document.createElement('button');
+        delBtn.className = 'chat-delete-btn';
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteChat(id);
+        };
+        
+        itemDiv.appendChild(btn);
+        itemDiv.appendChild(delBtn);
+        chatHistoryList.appendChild(itemDiv);
     });
+}
+
+function deleteChat(id) {
+    delete userChats[id];
+    saveChatHistory();
+    if (currentChatId === id) {
+        const remainingChats = Object.keys(userChats);
+        if (remainingChats.length > 0) {
+            loadChat(remainingChats.sort((a, b) => b - a)[0]);
+        } else {
+            createNewChat();
+        }
+    }
 }
 
 function createNewChat() {
