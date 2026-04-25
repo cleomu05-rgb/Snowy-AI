@@ -171,6 +171,23 @@ header {
     filter: drop-shadow(0 0 8px var(--accent-color));
 }
 
+.model-selector select {
+    background: rgba(30, 30, 30, 0.8);
+    color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    font-family: var(--font-main);
+}
+
+.model-selector select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
 .settings i {
     color: var(--text-muted);
     cursor: pointer;
