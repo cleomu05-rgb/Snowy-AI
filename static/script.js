@@ -119,9 +119,9 @@ async function startStatusPolling() {
                 
                 // Update live profile
                 if (data.game_data) {
-                    document.getElementById('live-profile').classList.remove('hidden');
+                    document.getElementById('live-telemetry').classList.remove('hidden');
                     document.getElementById('user-name-display').textContent = '@' + currentUser;
-                    document.getElementById('game-name-display').textContent = 'Playing ' + data.game_data.gameName;
+                    document.getElementById('game-name-display').textContent = data.game_data.gameName;
                     
                     if (data.game_data.user_img) {
                         document.getElementById('user-avatar').src = data.game_data.user_img;
@@ -133,6 +133,7 @@ async function startStatusPolling() {
                 
             } else {
                 connectionBanner.classList.remove('hidden');
+                document.getElementById('live-telemetry').classList.add('hidden');
             }
         } catch (e) {}
         setTimeout(poll, 2000);
