@@ -20,8 +20,12 @@ def get_roblox_thumbnails(user_id, place_id):
     game_img = "https://tr.rbxcdn.com/53eb9b17fe1432a809c73a13889b5006/150/150/Image/Png" # fallback
     try:
         if user_id:
-            req = urllib.request.urlopen(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true", timeout=3)
-            res = json.loads(req.read())
+            req = urllib.request.Request(
+                f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true",
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            )
+            resp = urllib.request.urlopen(req, timeout=3)
+            res = json.loads(resp.read())
             if res.get('data') and len(res['data']) > 0:
                 user_img = res['data'][0]['imageUrl']
     except Exception as e:
@@ -29,8 +33,12 @@ def get_roblox_thumbnails(user_id, place_id):
         
     try:
         if place_id:
-            req = urllib.request.urlopen(f"https://thumbnails.roblox.com/v1/places/gameicons?placeIds={place_id}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false", timeout=3)
-            res = json.loads(req.read())
+            req = urllib.request.Request(
+                f"https://thumbnails.roblox.com/v1/places/gameicons?placeIds={place_id}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false",
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            )
+            resp = urllib.request.urlopen(req, timeout=3)
+            res = json.loads(resp.read())
             if res.get('data') and len(res['data']) > 0:
                 game_img = res['data'][0]['imageUrl']
     except Exception as e:
