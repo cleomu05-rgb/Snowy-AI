@@ -7,8 +7,8 @@ app = Flask(__name__)
 # --- CONFIGURATION API ---
 API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyA6iaB7pLIMypL5ieKlsJ6ibAbm2rQc_eM")
 genai.configure(api_key=API_KEY)
-# We use gemini-1.5-flash (without -latest to avoid 404) or fallback to gemini-pro if needed
-model = genai.GenerativeModel('gemini-1.5-flash')
+# We use gemini-pro because your API key doesn't have access to the 1.5 models
+model = genai.GenerativeModel('gemini-pro')
 
 user_sessions = {}
 
