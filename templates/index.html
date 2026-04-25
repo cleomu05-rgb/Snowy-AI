@@ -15,6 +15,36 @@
         <span>Connected to Roblox</span>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <span class="close-btn" id="close-settings">&times;</span>
+            </div>
+            <div class="setting-item">
+                <div class="setting-text">
+                    <strong>Fast Mode</strong>
+                    <p>Auto-build scripts without asking for authorization.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="fast-mode-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-text">
+                    <strong>Direct Execute</strong>
+                    <p>Auto-execute scripts on Roblox directly.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="direct-execute-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <div id="login-screen" class="screen">
         <div class="login-container">
             <h1>Snowy AI</h1>
@@ -41,7 +71,7 @@
                 </select>
             </div>
             <div class="settings">
-                <i class="fas fa-cog"></i>
+                <i class="fas fa-cog" id="open-settings"></i>
             </div>
         </header>
 
@@ -62,8 +92,10 @@
         </div>
 
         <footer>
+            <div id="file-preview" class="hidden"></div>
             <div class="input-container">
-                <button class="plus-btn"><i class="fas fa-plus"></i></button>
+                <input type="file" id="file-upload" accept=".txt,.lua" style="display: none;">
+                <button class="plus-btn" onclick="document.getElementById('file-upload').click()"><i class="fas fa-plus"></i></button>
                 <input type="text" id="chat-input" placeholder="Message Snowy AI...">
                 <div class="input-actions">
                     <button class="mic-btn"><i class="fas fa-microphone"></i></button>
