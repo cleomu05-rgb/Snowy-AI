@@ -35,7 +35,8 @@ function showNotification() {
 // Fetch dynamic suggestions
 async function loadSuggestions() {
     try {
-        const response = await fetch('/api/suggestions');
+        const selectedModel = document.getElementById('model-select').value;
+        const response = await fetch(`/api/suggestions?model=${selectedModel}`);
         const data = await response.json();
         
         suggestionsContainer.innerHTML = ''; // Clear loading
@@ -55,6 +56,7 @@ async function loadSuggestions() {
     }
 }
 
+
 loginBtn.addEventListener('click', async () => {
     const username = usernameInput.value.trim().toLowerCase();
     if (username) {
@@ -72,6 +74,14 @@ loginBtn.addEventListener('click', async () => {
             startStatusPolling();
             loadSuggestions(); // Load the AI suggestions
         }
+    }
+});
+
+// Reload suggestions if the model is changed
+document.getElementById('model-select').addEventListener('change', () => {
+    if (currentUser) {
+        suggestionsContainer.innerHTML = '<button class="suggestion-btn">Loading...</button>';
+        loadSuggestions();
     }
 });
 
@@ -107,11 +117,13 @@ async function sendMessage() {
     const thinkingId = 'thinking-' + Date.now();
     addMessage("Snowy is thinking...", 'ai', thinkingId);
 
+    const selectedModel = document.getElementById('model-select').value;
+
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUser, message })
+            body: JSON.stringify({ username: currentUser, message, model: selectedModel })
         });
         
         const data = await response.json();
@@ -128,6 +140,7 @@ async function sendMessage() {
         addMessage("Connection error. Is the server running?", 'ai');
     }
 }
+
 
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', (e) => {
