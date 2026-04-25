@@ -762,29 +762,59 @@ header {
     gap: 8px;
 }
 
-.chat-item {
+.chat-item-container {
+    display: flex;
+    align-items: center;
     background: transparent;
     border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+.chat-item-container:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-item-container.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.chat-item-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
     color: #ccc;
     padding: 12px 15px;
-    border-radius: 10px;
     cursor: pointer;
     text-align: left;
     font-size: 0.85rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all 0.2s;
 }
 
-.chat-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+.chat-item-container:hover .chat-item-btn, .chat-item-container.active .chat-item-btn {
     color: #fff;
 }
 
-.chat-item.active {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.3);
-    color: #fff;
+.chat-delete-btn {
+    background: transparent;
+    border: none;
+    color: #ff4444;
+    padding: 12px 15px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.chat-item-container:hover .chat-delete-btn {
+    opacity: 0.7;
+}
+
+.chat-delete-btn:hover {
+    opacity: 1 !important;
 }
 
