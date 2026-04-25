@@ -100,6 +100,7 @@ def chat():
     message = data.get('message', '')
     model_name = data.get('model', 'gemini-pro')
     direct_execute = data.get('direct_execute', True)
+    no_talk = data.get('no_talk', False)
     
     user_data = user_sessions.get(username, {})
     game_context = ""
@@ -125,6 +126,13 @@ def chat():
     
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
 
+    if no_talk:
+        response_format = "RESPONSE: [Executed]"
+        extra_rule = "5. You are in NO TALK MODE. Do NOT provide any conversational text, explanations, or warnings. You must ONLY output `RESPONSE: [Executed]` followed by the CODE block containing the exploit."
+    else:
+        response_format = "RESPONSE: [Explain your analysis or what you created conversationally.]"
+        extra_rule = ""
+
     prompt = f"""
     You are Snowy AI, a highly advanced Roblox exploit generator and game analyzer (similar to Antigravity).
     The user wants: {message}
@@ -133,7 +141,7 @@ def chat():
     {game_context}
     
     You MUST format your response EXACTLY like this:
-    RESPONSE: [Explain your analysis or what you created conversationally.]
+    {response_format}
     CODE:
     ```lua
     -- Write your Lua code here
@@ -144,6 +152,7 @@ def chat():
     2. If the user asks to "explore" or "analyze", write a Lua script that targets the specific objects or Remotes listed in the preview, and print results using `print("ANALYZED : Found -> " .. item.Name)`
     3. The CODE section must contain ONLY valid Lua code. No markdown outside the block.
     4. Write efficient and working exploit code for modern executors.
+    {extra_rule}
     """
     
     try:
