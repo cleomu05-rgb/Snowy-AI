@@ -703,253 +703,246 @@ header {
     gap: 15px;
 }
 
-/* Sidebar Styles */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: -300px;
-    width: 280px;
-    height: 100%;
-    background: rgba(20, 20, 20, 0.95);
-    backdrop-filter: blur(15px);
+/* Dashboard Navigation */
+.side-nav {
+    width: 60px;
+    background: #080808;
     border-right: 1px solid var(--border-color);
-    box-shadow: 5px 0 25px rgba(0,0,0,0.5);
-    z-index: 1500;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    padding: 1.5rem 1rem;
-}
-
-.sidebar.open {
-    left: 0;
-}
-
-.sidebar-header {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    color: #fff;
+    padding: 20px 0;
+    z-index: 1000;
 }
 
-.new-chat-btn {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
+.nav-logo {
+    text-align: center;
+    color: var(--accent-color);
+    font-size: 1.6rem;
+    margin-bottom: 30px;
+    filter: drop-shadow(0 0 8px var(--glow-color));
+}
+
+.nav-item {
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 1.5rem;
-    transition: background 0.3s;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
 }
 
-.new-chat-btn:hover {
-    background: #2563eb;
+.nav-item:hover {
+    color: #888;
 }
 
-.chat-history-list {
+.nav-item.active {
+    color: var(--accent-color);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 24px;
+    background: var(--accent-color);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px var(--accent-color);
+}
+
+/* Main Content Layout */
+#main-content {
     flex: 1;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    overflow: hidden;
+    position: relative;
 }
 
-.chat-item-container {
+.view {
+    flex: 1;
     display: flex;
-    align-items: center;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    padding: 0;
-    transition: all 0.2s;
+    flex-direction: column;
     overflow: hidden;
 }
 
-.chat-item-container:hover {
+/* View Headers */
+.view-header {
+    background: rgba(15, 15, 15, 0.95);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 65px;
+    backdrop-filter: blur(10px);
+}
+
+/* Executor Specifics */
+.executor-tabs {
+    display: flex;
+    gap: 5px;
+    align-self: flex-end;
+}
+
+.exec-tab {
+    padding: 10px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #666;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    transition: 0.2s;
+}
+
+.exec-tab:hover {
+    color: #aaa;
     background: rgba(255, 255, 255, 0.05);
 }
 
-.chat-item-container.active {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.3);
-}
-
-.chat-item-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #ccc;
-    padding: 12px 15px;
-    cursor: pointer;
-    text-align: left;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.chat-item-container:hover .chat-item-btn, .chat-item-container.active .chat-item-btn {
+.exec-tab.active {
+    background: #1e1e1e;
     color: #fff;
+    border-color: var(--border-color);
+    position: relative;
+    z-index: 1;
 }
 
-.chat-delete-btn {
-    background: transparent;
-    border: none;
+.close-tab {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    transition: 0.2s;
+}
+
+.close-tab:hover {
+    opacity: 1;
     color: #ff4444;
-    padding: 12px 15px;
+}
+
+.add-tab {
+    padding: 10px 12px;
+    color: #444;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.chat-item-container:hover .chat-delete-btn {
-    opacity: 0.7;
-}
-
-.chat-delete-btn:hover {
-    opacity: 1 !important;
-}
-
-/* Advanced OP UI Additions */
-.tools-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 10px 0 15px 0;
-}
-
-.tool-pill {
-    background: rgba(40, 50, 70, 0.4);
-    border: 1px solid rgba(100, 150, 255, 0.15);
-    color: #8ba8df;
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 0.75rem;
-    font-family: monospace;
-}
-
-.tools-count {
-    color: #777;
-    font-size: 0.8rem;
-    margin-left: 10px;
-    font-weight: normal;
-}
-
-.steps-box {
-    background: rgba(15, 15, 15, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 12px 15px;
-    margin: 0 0 15px 0;
-}
-
-.steps-header {
-    color: #ccc;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    transition: 0.2s;
 }
 
-.step-item {
-    color: #999;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    font-family: monospace;
+.add-tab:hover {
+    color: var(--accent-color);
 }
 
-.step-item i {
-    color: #10b981;
-    font-size: 0.75rem;
-}
-
-/* Execute Prompt Box */
-.execute-prompt-box {
-    background: rgba(25, 25, 30, 0.9);
-    border: 1px solid rgba(100, 150, 255, 0.15);
-    border-radius: 10px;
-    padding: 15px;
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.exec-title {
-    color: #e0e0e0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.exec-title i {
-    color: #3b82f6;
-}
-
-.exec-actions {
+.executor-actions {
     display: flex;
     gap: 10px;
 }
 
-.exec-run-btn {
-    background: #10b981;
-    color: #fff;
-    border: none;
+.exec-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ccc;
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.exec-run-btn:hover {
-    background: #059669;
-}
-
-.exec-dismiss-btn {
-    background: transparent;
-    color: #999;
-    border: 1px solid #444;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.exec-dismiss-btn:hover {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-}
-
-.exec-success {
-    color: #10b981;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 0;
 }
 
+.exec-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.exec-action-btn.run {
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.exec-action-btn.run:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Editor Styles */
+.editor-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: #1e1e1e;
+}
+
+.editor-wrapper {
+    flex: 1;
+    display: flex;
+}
+
+.line-numbers {
+    width: 45px;
+    background: #1a1a1a;
+    color: #444;
+    padding: 20px 0;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    padding-right: 12px;
+    user-select: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+#code-editor {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #d4d4d4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    padding: 20px;
+    resize: none;
+    outline: none;
+    white-space: pre;
+    overflow: auto;
+}
+
+/* Welcome Message */
+.welcome-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #444;
+    text-align: center;
+    padding: 40px;
+}
+
+.welcome-msg i {
+    font-size: 4rem;
+    color: rgba(255, 255, 255, 0.05);
+    margin-bottom: 20px;
+}
+
+.welcome-msg h2 {
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.welcome-msg p {
+    font-size: 0.9rem;
+    max-width: 400px;
+}
