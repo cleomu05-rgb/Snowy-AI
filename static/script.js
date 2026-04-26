@@ -432,7 +432,7 @@ async function sendMessage() {
     chatInput.value = '';
 
     const thinkingId = 'thinking-' + Date.now();
-    const logInterval = createThinkingBlock(thinkingId);
+    const thinkingObj = createThinkingBlock(thinkingId);
 
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
@@ -494,7 +494,7 @@ async function sendMessage() {
             addMessage("Error: " + data.error, 'ai');
         }
     } catch (e) {
-        clearInterval(logInterval);
+        if (thinkingObj) clearInterval(thinkingObj.timerInterval);
         if (document.getElementById(thinkingId)) document.getElementById(thinkingId).remove();
         console.error("Chat Error:", e);
         addMessage("Connection error: " + e.message + ". Check if Render is still starting up or if the server crashed.", 'ai');
