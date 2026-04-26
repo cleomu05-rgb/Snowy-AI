@@ -30,8 +30,10 @@ const uiMethodSelect = document.getElementById('ui-method-select');
 const generatingSpeedSlider = document.getElementById('generating-speed');
 const speedValueDisplay = document.getElementById('speed-value');
 const doubleVerifyToggle = document.getElementById('double-verify-toggle');
+const deepAnalysisToggle = document.getElementById('deep-analysis-toggle');
 
 let lastRobloxErrorTime = 0;
+let currentInventorySample = "";
 
 // Sidebar Elements
 const sidebar = document.getElementById('sidebar');
@@ -246,6 +248,12 @@ async function startStatusPolling() {
                         currentWorkspaceSample = "Workspace";
                     }
 
+                    if (data.inventory_preview && data.inventory_preview.length > 0) {
+                        currentInventorySample = data.inventory_preview[0].split(' (')[0];
+                    } else {
+                        currentInventorySample = "Inventory";
+                    }
+
                     if (data.game_data.user_img) {
                         document.getElementById('user-avatar').src = data.game_data.user_img;
                     }
@@ -297,6 +305,32 @@ function createThinkingBlock(id) {
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
+    // Initial Deep Analysis Logs (Simulated for flavor but using real data)
+    if (deepAnalysisToggle.checked) {
+        const deepLogs = [
+            `Searching for tools in Backpack...`,
+            `Found: ${currentInventorySample || 'Empty Inventory'}`,
+            `Analyzing hierarchy of ${currentWorkspaceSample || 'Workspace'}...`,
+            `Mapping path for current request...`
+        ];
+        
+        let logIdx = 0;
+        const deepLogInterval = setInterval(() => {
+            if (logIdx < deepLogs.length) {
+                const p = document.createElement('div');
+                p.style.fontSize = '0.75rem';
+                p.style.color = '#4b5563';
+                p.style.marginBottom = '2px';
+                p.textContent = `> ${deepLogs[logIdx]}`;
+                logs.appendChild(p);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                logIdx++;
+            } else {
+                clearInterval(deepLogInterval);
+            }
+        }, 800);
+    }
+
     const startTime = Date.now();
     const timerInterval = setInterval(() => {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
