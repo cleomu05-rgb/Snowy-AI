@@ -152,20 +152,33 @@ def chat():
     {game_context}
     
     [MISSION]
-    Analyze the [PRIORITY] items and [REMOTE EVENTS] provided in the context to create an ELITE exploit.
-    - If you see items like 'Treasure', 'Coin', or 'Egg' in the [PRIORITY] list, write a high-performance auto-collect or auto-farm script.
-    - Use the Full Paths provided in the context (e.g., game.Workspace.Folder.Item) to ensure the script never fails.
-    - If no specific interesting items are found, provide a powerful universal script (Infinite Jump, Fly, Speed) but always try to customize it for the game "{game_name_for_search}".
+    1. Provide a deep, agentic analysis. Do not just output code.
+    2. If the user asks a simple question (e.g. "what is my name"), JUST answer it simply without code.
+    3. If creating a script/exploit, you MUST provide a structured 'Thought Process' before the code block.
     
-    [UI/HUB]
-    If a Hub or GUI is requested, you MUST use Orion Library or Rayfield Library. Create multiple tabs (Main, Combat, Teleports, Misc) and add toggles for all generated exploits.
+    [RESPONSE FORMAT FOR SCRIPTS]
+    THOUGHTS:
+    ### contemplating [game name or objective]
+    [Detailed paragraph about your analysis of the game's goal and what you plan to automate.]
     
-    [STYLE]
-    Respond like a top-tier hacking AI. Be concise but technical.
-    Wrap your Lua code in a standard markdown block:
+    ### developing [feature name]
+    [Detailed paragraph about technical implementation, mentioning specific objects or remotes from the context.]
+    
+    ### refining [mechanics]
+    [Detailed paragraph about combat, movement (tweening), or safety checks.]
+    
+    ### synthesizing auto-actions
+    [Final integration summary.]
+    
+    CODE:
     ```lua
     -- Your OP script here
     ```
+    
+    [RULES]
+    - If no script is needed, do NOT use 'THOUGHTS:' or 'CODE:' tags. Just reply normally.
+    - If a script is needed, use a UI library like Orion or Rayfield.
+    - Mention specific items found in the [PRIORITY] or [REMOTE EVENTS] list to show you are actually analyzing the game.
     """
     
     try:
@@ -201,44 +214,48 @@ def chat():
                 response = fallback_model.generate_content(prompt)
                 text = response.text
         
-        reply_message = "Command sent to Roblox!"
+        reply_message = ""
         lua_code = ""
+        thoughts = ""
         
-        if "```lua" in text:
+        if "THOUGHTS:" in text:
+            parts = text.split("THOUGHTS:")
+            thought_part = parts[1]
+            if "CODE:" in thought_part:
+                sub_parts = thought_part.split("CODE:")
+                thoughts = sub_parts[0].strip()
+                code_raw = sub_parts[1].strip()
+                if "```lua" in code_raw:
+                    lua_code = code_raw.split("```lua")[1].split("```")[0].strip()
+                else:
+                    lua_code = code_raw.replace("```", "").strip()
+            else:
+                thoughts = thought_part.strip()
+            reply_message = "I have analyzed the game and planned the execution."
+        elif "```lua" in text:
             parts = text.split("```lua")
             reply_message = parts[0].strip()
             lua_code = parts[1].split("```")[0].strip()
-        elif "CODE:" in text:
-            parts = text.split("CODE:")
-            reply_message = parts[0].replace("RESPONSE:", "").strip()
-            lua_code = parts[1].replace("```lua", "").replace("```", "").strip()
         else:
-            reply_message = "I have analyzed the game and generated this script for you:"
-            lua_code = text.strip()
+            reply_message = text.strip()
             
         # Clean up reply_message if it's empty
-        if not reply_message:
-            reply_message = "Script generated and analyzed."
+        if not reply_message and not thoughts:
+            reply_message = "Analysis complete."
             
-        download_data = None
-        if wants_file:
-            download_data = {
-                "filename": "snowy_ai_script.lua",
-                "content": lua_code
-            }
-            reply_message += "\n(I have also generated the file for you to download!)"
-
-        if direct_execute:
-            user_sessions[username]["pending"] = lua_code
-        else:
+        response_json = {
+            "success": True,
+            "message": reply_message,
+            "thoughts": thoughts,
+            "has_code": bool(lua_code),
+            "lua_code": lua_code,
+            "command": lua_code if direct_execute else None
+        }
+        
+        if not direct_execute and lua_code:
             user_sessions[username]["staged_code"] = lua_code
             
-        return jsonify({
-            "success": True, 
-            "message": reply_message,
-            "has_code": bool(lua_code),
-            "download_file": download_data
-        })
+        return jsonify(response_json)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
