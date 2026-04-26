@@ -95,6 +95,7 @@ def status(username):
         }
         response_data["workspace_preview"] = user["game_data"].get("workspacePreview", [])
         response_data["remote_preview"] = user["game_data"].get("remotePreview", [])
+        response_data["inventory_preview"] = user["game_data"].get("inventoryPreview", [])
     
     if user.get("last_error") and time.time() - user["last_error"]["time"] < 30:
         response_data["last_error"] = user["last_error"]
@@ -143,6 +144,9 @@ def chat():
         
         [REMOTE EVENTS PREVIEW]:
         {', '.join(gd.get('remotePreview', []))}
+        
+        [LOCALPLAYER INVENTORY (Tools)]:
+        {', '.join(gd.get('inventoryPreview', []))}
         """
     
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
@@ -190,7 +194,8 @@ def chat():
     [RULES]
     - If no script is needed, do NOT use 'THOUGHTS:' or 'CODE:' tags. Just reply normally.
     - {ui_instruction}
-    - Mention specific items found in the [PRIORITY] or [REMOTE EVENTS] list to show you are actually analyzing the game.
+    - IMPORTANT: Use EXACT names for tools from the [LOCALPLAYER INVENTORY] list and objects from the [WORKSPACE PREVIEW] list. Do not hallucinate names.
+    - Mention specific items found in the context to show you are actually analyzing the game.
     """
     
     try:
