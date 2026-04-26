@@ -1039,3 +1039,30 @@ header {
     word-break: break-all;
 }
 
+.settings-select {
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+.range-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#generating-speed {
+    flex: 1;
+    cursor: pointer;
+}
+
+#speed-value {
+    color: #3b82f6;
+    font-weight: 600;
+    min-width: 20px;
+}
+
