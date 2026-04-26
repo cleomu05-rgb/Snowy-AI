@@ -3,12 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snowy AI - Roblox Assistant</title>
+    <title>Snowy AI - Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Left Navigation Bar -->
+    <nav class="side-nav">
+        <div class="nav-top">
+            <div class="nav-logo">
+                <i class="fas fa-snowflake"></i>
+            </div>
+            <div class="nav-item active" id="nav-chat" title="AI Chat">
+                <i class="fas fa-comment-alt"></i>
+            </div>
+            <div class="nav-item" id="nav-executor" title="Script Executor">
+                <i class="fas fa-code"></i>
+            </div>
+        </div>
+        <div class="nav-bottom">
+            <div class="nav-item" id="open-settings-nav" title="Settings">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="nav-item" id="logout-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+    </nav>
+
     <!-- Notification Toast -->
     <div id="notification-toast" class="toast hidden">
         <i class="fas fa-check-circle"></i>
@@ -48,7 +71,7 @@
     <!-- Sidebar / Chat History -->
     <div id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <h2>Chats</h2>
+            <h2>History</h2>
             <button id="close-sidebar" class="icon-btn"><i class="fas fa-times"></i></button>
         </div>
         <button id="new-chat-btn" class="new-chat-btn"><i class="fas fa-plus"></i> New Chat</button>
@@ -59,84 +82,102 @@
 
     <div id="login-screen" class="screen">
         <div class="login-container">
+            <i class="fas fa-snowflake main-logo"></i>
             <h1>Snowy AI</h1>
-            <p>Enter your Roblox username to get started</p>
+            <p>Connect to your Roblox session</p>
             <div class="input-group">
                 <input type="text" id="username-input" placeholder="Roblox Username">
-                <button id="login-btn">Connect</button>
+                <button id="login-btn">Connect <i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
     </div>
 
-    <div id="chat-screen" class="screen hidden">
-        <header>
-            <button id="open-sidebar" class="icon-btn"><i class="fas fa-bars"></i></button>
-            <div class="logo-area">
-                <i class="fas fa-snowflake"></i>
-                <span>Snowy AI</span>
-            </div>
-            
-            <!-- Telemetry Container -->
-            <div id="live-telemetry" class="live-telemetry hidden">
-                <div class="telemetry-card">
-                    <img id="user-avatar" src="" alt="User">
-                    <div class="card-info">
-                        <span class="card-title">User</span>
-                        <span id="user-name-display" class="card-text">@username</span>
+    <div id="main-content" class="screen hidden">
+        <!-- Chat Screen -->
+        <div id="chat-view" class="view">
+            <header class="view-header">
+                <div class="header-left">
+                    <button id="open-sidebar" class="icon-btn"><i class="fas fa-history"></i></button>
+                    <div class="ai-profile">
+                        <div class="ai-info">
+                            <h1>AI Assistant</h1>
+                            <span class="status-indicator">Online</span>
+                        </div>
                     </div>
                 </div>
-                <div class="telemetry-card">
-                    <img id="game-icon" src="" alt="Game">
-                    <div class="card-info">
-                        <span class="card-title">Game</span>
-                        <span id="game-name-display" class="card-text">Playing Unknown</span>
+                <div class="header-right">
+                    <div id="live-telemetry" class="live-telemetry hidden">
+                        <div class="telemetry-item">
+                            <img id="user-avatar" src="" alt="User">
+                            <span id="user-name-display">@user</span>
+                        </div>
+                        <div class="telemetry-item">
+                            <img id="game-icon" src="" alt="Game">
+                            <span id="game-name-display">Game</span>
+                        </div>
                     </div>
+                    <select id="model-select">
+                        <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="gemini-pro">Gemini 1.0 Pro</option>
+                        <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                        <option value="gpt-4o-mini">GPT-4o-Mini (OpenAI)</option>
+                        <option value="step-3.5-flash">Step 3.5 Flash (StepFun)</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-msg">
+                    <i class="fas fa-snowflake"></i>
+                    <h2>Welcome to Snowy AI</h2>
+                    <p>Ask me to generate an exploit, analyze a game, or build a Hub.</p>
                 </div>
             </div>
-            <div class="model-selector">
-                <select id="model-select">
-                    <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="gemini-pro">Gemini 1.0 Pro</option>
-                    <option value="gpt-4o">GPT-4o (OpenAI)</option>
-                    <option value="gpt-4o-mini">GPT-4o-Mini (OpenAI)</option>
-                    <option value="step-3.5-flash">Step 3.5 Flash (StepFun)</option>
-                </select>
+
+            <div id="connection-banner" class="banner hidden">
+                <div class="banner-content">
+                    <i class="fas fa-wifi"></i>
+                    <span>Connect the Roblox script to enable live analysis</span>
+                    <button id="copy-script-btn">Copy Script</button>
+                </div>
             </div>
-            <div class="settings">
-                <i class="fas fa-cog" id="open-settings"></i>
-            </div>
-        </header>
 
-        <main id="chat-messages">
-            <!-- Messages will appear here -->
-        </main>
+            <div id="suggestions-container" class="suggestions"></div>
 
-        <div id="connection-banner" class="banner">
-            <div class="banner-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Execute the script in your Roblox executor to connect</span>
-                <button id="copy-script-btn">Copy</button>
-            </div>
-        </div>
-
-        <div class="suggestions" id="suggestions-container">
-            <button class="suggestion-btn">Loading...</button>
-        </div>
-
-        <footer>
-            <div id="file-preview" class="hidden"></div>
-            <div class="input-container">
-                <input type="file" id="file-upload" accept=".txt,.lua" style="display: none;">
-                <button class="plus-btn" onclick="document.getElementById('file-upload').click()"><i class="fas fa-plus"></i></button>
-                <input type="text" id="chat-input" placeholder="Message Snowy AI...">
-                <div class="input-actions">
-                    <button class="mic-btn"><i class="fas fa-microphone"></i></button>
+            <footer class="input-area">
+                <div id="file-preview" class="file-preview hidden"></div>
+                <div class="input-container">
+                    <label for="file-upload" class="file-label"><i class="fas fa-paperclip"></i></label>
+                    <input type="file" id="file-upload" hidden>
+                    <input type="text" id="chat-input" placeholder="Message Snowy AI...">
                     <button id="send-btn" class="send-btn"><i class="fas fa-arrow-up"></i></button>
                 </div>
+            </footer>
+        </div>
+
+        <!-- Executor Screen -->
+        <div id="executor-view" class="view hidden">
+            <header class="view-header">
+                <div class="executor-tabs" id="executor-tabs">
+                    <div class="exec-tab active" data-id="tab-1">Script 1 <i class="fas fa-times close-tab"></i></div>
+                    <div class="add-tab" id="add-executor-tab"><i class="fas fa-plus"></i></div>
+                </div>
+                <div class="executor-actions">
+                    <button id="exec-btn" class="exec-action-btn run"><i class="fas fa-play"></i> Execute</button>
+                    <button id="save-exec-btn" class="exec-action-btn"><i class="fas fa-save"></i> Save</button>
+                    <button id="load-exec-btn" class="exec-action-btn"><i class="fas fa-folder-open"></i> Load</button>
+                    <button id="clear-exec-btn" class="exec-action-btn"><i class="fas fa-trash"></i> Clear</button>
+                </div>
+            </header>
+            <div class="editor-container">
+                <div class="editor-wrapper">
+                    <div class="line-numbers" id="line-numbers">1</div>
+                    <textarea id="code-editor" spellcheck="false" placeholder="-- Script Editor --&#10;-- Write your code here or ask the AI to generate it..."></textarea>
+                </div>
             </div>
-        </footer>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
