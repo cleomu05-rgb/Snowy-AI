@@ -2,7 +2,9 @@ let currentUser = "";
 let hasShownNotification = false;
 let uploadedFileContent = null;
 let currentChatId = null;
-let userChats = {}; // Format: { "chat_id": { title: "Title", messages: [ {sender: "user", text: "..."} ] } }
+let userChats = {};
+let currentGameName = "";
+let currentWorkspaceSample = "";
 
 // UI Elements
 const loginScreen = document.getElementById('login-screen');
@@ -224,7 +226,14 @@ async function startStatusPolling() {
                     document.getElementById('live-telemetry').classList.remove('hidden');
                     document.getElementById('user-name-display').textContent = '@' + currentUser;
                     document.getElementById('game-name-display').textContent = data.game_data.gameName;
+                    currentGameName = data.game_data.gameName;
                     
+                    if (data.workspace_preview && data.workspace_preview.length > 0) {
+                        currentWorkspaceSample = data.workspace_preview[0].replace(/\[.*?\]\s*/, '').split(' (')[0];
+                    } else {
+                        currentWorkspaceSample = "Workspace";
+                    }
+
                     if (data.game_data.user_img) {
                         document.getElementById('user-avatar').src = data.game_data.user_img;
                     }
@@ -270,7 +279,7 @@ function createThinkingBlock(id) {
     stepsBox.classList.add('steps-box');
     stepsBox.innerHTML = `
         <div class="steps-header"><i class="fas fa-list"></i> Steps (4/4)</div>
-        <div class="step-item"><i class="fas fa-check-circle"></i> Inspect live game context: Dig to Earth's CORE!</div>
+        <div class="step-item"><i class="fas fa-check-circle"></i> Inspect live game context: ${currentGameName || 'Analyzing game...'}</div>
         <div class="step-item"><i class="fas fa-check-circle"></i> Map remotes, scripts, GUI, prompts, players</div>
         <div class="step-item"><i class="fas fa-check-circle"></i> Pick the best exploit path</div>
         <div class="step-item"><i class="fas fa-check-circle"></i> Build a strong targeted UI/tool</div>
@@ -287,12 +296,12 @@ function createThinkingBlock(id) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
     const logMessages = [
-        "ANALYZED Children loaded: 0",
-        "ANALYZED Children loaded: 0",
-        "USED 'project_write_file' Saving project file: hub.luau",
-        "USED 'roblox_execute' Running Luau",
-        "ANALYZED Saved Session Scripts/hub.luau",
-        "ANALYZED Luau returned: ok"
+        `ANALYZED Initiating deep scan on ${currentGameName || 'game'}...`,
+        `USED 'roblox_get_children' Analyzing ${currentWorkspaceSample || 'Workspace'} hierarchy...`,
+        "ANALYZED Identifying interactive ProximityPrompts and Models...",
+        "USED 'roblox_get_remotes' Mapping network traffic and RemoteEvents...",
+        "ANALYZED Potential entry point detected in ReplicatedStorage.",
+        "USED 'roblox_execute' Compiling and staging exploit payload..."
     ];
     
     let index = 0;
