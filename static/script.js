@@ -430,13 +430,22 @@ async function sendMessage() {
                 `;
                 
                 execPrompt.querySelector('.exec-run-btn').onclick = async () => {
-                    execPrompt.querySelector('.exec-run-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
+                    const btn = execPrompt.querySelector('.exec-run-btn');
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
+                    
                     await fetch('/api/authorize_execute', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({username: currentUser})
                     });
-                    execPrompt.innerHTML = '<div class="exec-success"><i class="fas fa-check"></i> Script Executed</div>';
+                    
+                    btn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                    setTimeout(() => { 
+                        btn.innerHTML = originalText; 
+                        btn.disabled = false;
+                    }, 2000);
                 };
                 
                 execPrompt.querySelector('.exec-dismiss-btn').onclick = () => {
@@ -451,8 +460,9 @@ async function sendMessage() {
         }
     } catch (e) {
         clearInterval(logInterval);
-        document.getElementById(thinkingId).remove();
-        addMessage("Connection error. Is the server running?", 'ai');
+        if (document.getElementById(thinkingId)) document.getElementById(thinkingId).remove();
+        console.error("Chat Error:", e);
+        addMessage("Connection error: " + e.message + ". Check if Render is still starting up or if the server crashed.", 'ai');
     }
 }
 
