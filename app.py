@@ -95,6 +95,10 @@ def status(username):
         }
         response_data["workspace_preview"] = user["game_data"].get("workspacePreview", [])
         response_data["remote_preview"] = user["game_data"].get("remotePreview", [])
+    
+    if user.get("last_error") and time.time() - user["last_error"]["time"] < 30:
+        response_data["last_error"] = user["last_error"]
+        
     return jsonify(response_data)
 
 @app.route('/api/suggestions', methods=['GET'])
@@ -119,14 +123,13 @@ def chat():
     message = data.get('message', '')
     model_name = data.get('model', 'gemini-pro')
     direct_execute = data.get('direct_execute', True)
+    ui_method = data.get('ui_method', 'orion')
     
     user_data = user_sessions.get(username, {})
     game_context = ""
-    game_name_for_search = "Roblox"
     
     if user_data.get("game_data"):
         gd = user_data["game_data"]
-        game_name_for_search = gd.get('gameName', 'Roblox')
         game_context = f"""
         [LIVE ROBLOX GAME CONTEXT]
         Game Name: {gd.get('gameName')}
@@ -143,6 +146,15 @@ def chat():
         """
     
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
+
+    # UI Instruction building
+    ui_instruction = f"Use {ui_method} library for the GUI."
+    if ui_method == "custom":
+        ui_instruction = "Build your own custom ScreenGui. Make it draggable and mobile-friendly. Do not use Orion or Rayfield."
+    elif ui_method == "rayfield":
+        ui_instruction = "Use Rayfield Library for the GUI."
+    else:
+        ui_instruction = "Use Orion Library for the GUI."
 
     prompt = f"""
     You are Snowy AI, an extremely advanced, autonomous Roblox Exploit Developer AI (Agentic AI).
@@ -177,7 +189,7 @@ def chat():
     
     [RULES]
     - If no script is needed, do NOT use 'THOUGHTS:' or 'CODE:' tags. Just reply normally.
-    - If a script is needed, use a UI library like Orion or Rayfield.
+    - {ui_instruction}
     - Mention specific items found in the [PRIORITY] or [REMOTE EVENTS] list to show you are actually analyzing the game.
     """
     
@@ -292,6 +304,23 @@ def rb_connect():
     else:
         user_sessions[username] = {"connected": True, "last_poll": time.time(), "pending": None, "staged_code": None, "game_data": data}
     return jsonify({"success": True})
+
+@app.route('/api/roblox/error', methods=['POST'])
+def rb_error():
+    data = request.get_json(force=True)
+    username = data.get('username', '').lower()
+    error_msg = data.get('error')
+    failed_code = data.get('command')
+    
+    if username in user_sessions:
+        user_sessions[username]["last_error"] = {
+            "message": error_msg,
+            "code": failed_code,
+            "time": time.time()
+        }
+        print(f"Snowy AI: Error reported by {username}: {error_msg}")
+        return jsonify({"success": True})
+    return jsonify({"success": False}), 404
 
 @app.route('/api/roblox/poll/<username>')
 def rb_poll(username):
