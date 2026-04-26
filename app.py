@@ -249,7 +249,6 @@ def authorize_execute():
     
     if username in user_sessions and user_sessions[username].get("staged_code"):
         user_sessions[username]["pending"] = user_sessions[username]["staged_code"]
-        user_sessions[username]["staged_code"] = None
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "No staged code found"})
 
