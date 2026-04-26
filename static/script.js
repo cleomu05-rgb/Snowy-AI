@@ -25,6 +25,7 @@ const openSettingsBtn = document.getElementById('open-settings');
 const closeSettingsBtn = document.getElementById('close-settings');
 const fastModeToggle = document.getElementById('fast-mode-toggle');
 const directExecuteToggle = document.getElementById('direct-execute-toggle');
+const fixOnThumbsToggle = document.getElementById('fix-on-thumbs-toggle');
 
 // Sidebar Elements
 const sidebar = document.getElementById('sidebar');
@@ -261,93 +262,147 @@ function createThinkingBlock(id) {
     const title = document.createElement('div');
     title.classList.add('thinking-title');
     title.innerHTML = `
-        <div class="dot-wave"><span></span><span></span><span></span></div>
-        Investigating <span class="tools-count">14 tools</span>
-    `;
-    
-    const tools = document.createElement('div');
-    tools.classList.add('tools-pills');
-    const toolNames = ['roblox_get_remotes', 'roblox_search', 'roblox_get_children x9', 'roblox_get_properties', 'project_write_file', 'roblox_execute'];
-    toolNames.forEach(t => {
-        const pill = document.createElement('span');
-        pill.classList.add('tool-pill');
-        pill.textContent = t;
-        tools.appendChild(pill);
-    });
-
-    const stepsBox = document.createElement('div');
-    stepsBox.classList.add('steps-box');
-    stepsBox.innerHTML = `
-        <div class="steps-header"><i class="fas fa-list"></i> Steps (4/4)</div>
-        <div class="step-item"><i class="fas fa-check-circle"></i> Inspect live game context: ${currentGameName || 'Analyzing game...'}</div>
-        <div class="step-item"><i class="fas fa-check-circle"></i> Map remotes, scripts, GUI, prompts, players</div>
-        <div class="step-item"><i class="fas fa-check-circle"></i> Pick the best exploit path</div>
-        <div class="step-item"><i class="fas fa-check-circle"></i> Build a strong targeted UI/tool</div>
+        <i class="fas fa-chevron-down"></i>
+        thinking... <span id="timer-${id}">0.0s</span>
     `;
     
     const logs = document.createElement('div');
     logs.classList.add('thinking-logs');
     
     div.appendChild(title);
-    div.appendChild(tools);
-    div.appendChild(stepsBox);
     div.appendChild(logs);
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    const logMessages = [
-        `ANALYZED Initiating deep scan on ${currentGameName || 'game'}...`,
-        `USED 'roblox_get_children' Analyzing ${currentWorkspaceSample || 'Workspace'} hierarchy...`,
-        "ANALYZED Identifying interactive ProximityPrompts and Models...",
-        "USED 'roblox_get_remotes' Mapping network traffic and RemoteEvents...",
-        "ANALYZED Potential entry point detected in ReplicatedStorage.",
-        "USED 'roblox_execute' Compiling and staging exploit payload..."
-    ];
+    const startTime = Date.now();
+    const timerInterval = setInterval(() => {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        const timerSpan = document.getElementById(`timer-${id}`);
+        if (timerSpan) timerSpan.textContent = elapsed + 's';
+    }, 100);
     
-    let index = 0;
-    const logInterval = setInterval(() => {
-        if (index < logMessages.length) {
-            const p = document.createElement('div');
-            p.classList.add('log-entry');
-            if (logMessages[index].includes('USED')) p.classList.add('used');
-            if (logMessages[index].includes('ANALYZED')) p.classList.add('analyzed');
-            p.textContent = logMessages[index];
-            logs.appendChild(p);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            index++;
-        }
-    }, 600);
-    
-    return logInterval;
+    return {
+        timerInterval,
+        logsContainer: logs,
+        id: id
+    };
 }
 
-// --- MESSAGE ACTIONS ---
-function createMessageActions(text) {
+async function renderThoughts(thinkingObj, thoughtsText) {
+    const logs = thinkingObj.logsContainer;
+    if (!thoughtsText) return;
+
+    const sections = thoughtsText.split('###').filter(s => s.trim() !== '');
+    
+    for (let section of sections) {
+        const lines = section.split('\n');
+        const headerText = lines[0].trim();
+        const bodyText = lines.slice(1).join('\n').trim();
+
+        const sectionDiv = document.createElement('div');
+        sectionDiv.classList.add('thought-section');
+        
+        const header = document.createElement('div');
+        header.classList.add('thought-header');
+        header.textContent = headerText;
+        
+        const body = document.createElement('div');
+        body.classList.add('thought-body');
+        
+        sectionDiv.appendChild(header);
+        sectionDiv.appendChild(body);
+        logs.appendChild(sectionDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Typing effect for the body
+        await streamText(body, bodyText, 5);
+        await new Promise(r => setTimeout(r, 200));
+    }
+}
+
+async function streamText(element, text, speed = 10) {
+    element.innerHTML = '';
+    for (let char of text) {
+        if (char === '\n') {
+            element.appendChild(document.createElement('br'));
+        } else {
+            element.innerHTML += char;
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        await new Promise(r => setTimeout(r, speed));
+    }
+}
+
+// --- AGENTIC ACTION BAR ---
+function createAgenticActions(code, messageId) {
     const actions = document.createElement('div');
-    actions.classList.add('message-actions');
+    actions.classList.add('agentic-actions');
     
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'action-btn';
-    copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
-    copyBtn.onclick = () => navigator.clipboard.writeText(text);
+    const copyBtn = createIconButton('fa-copy', 'Copy', () => {
+        navigator.clipboard.writeText(code);
+        showToast("Copied to clipboard!");
+    });
     
-    const replyBtn = document.createElement('button');
-    replyBtn.className = 'action-btn';
-    replyBtn.innerHTML = '<i class="fas fa-reply"></i> Reply';
-    replyBtn.onclick = () => chatInput.focus();
-    
-    const fixBtn = document.createElement('button');
-    fixBtn.className = 'action-btn';
-    fixBtn.innerHTML = '<i class="fas fa-wrench"></i> Fix';
-    fixBtn.onclick = () => {
-        chatInput.value = "There is an error with this script. Fix it: ";
-        chatInput.focus();
-    };
-    
+    const runBtn = createIconButton('fa-play', 'Run', async () => {
+        const originalContent = runBtn.innerHTML;
+        runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        await fetch('/api/authorize_execute', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: currentUser})
+        });
+        runBtn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => runBtn.innerHTML = originalContent, 2000);
+        showToast("Script Executed on Roblox!");
+    });
+    runBtn.classList.add('run-btn');
+
+    const upBtn = createIconButton('fa-thumbs-up', 'Good', () => {
+        upBtn.classList.toggle('active');
+        downBtn.classList.remove('active');
+    });
+
+    const downBtn = createIconButton('fa-thumbs-down', 'Bad', () => {
+        downBtn.classList.toggle('active');
+        upBtn.classList.remove('active');
+        if (fixOnThumbsToggle.checked) {
+            chatInput.value = "The previous script didn't work. Please fix it and make it better.";
+            sendMessage();
+        }
+    });
+    downBtn.classList.add('thumbs-down');
+
+    const refreshBtn = createIconButton('fa-sync-alt', 'Regenerate', () => {
+        chatInput.value = "Regenerate that script, make it even more OP and fix any potential bugs.";
+        sendMessage();
+    });
+
     actions.appendChild(copyBtn);
-    actions.appendChild(replyBtn);
-    actions.appendChild(fixBtn);
+    actions.appendChild(runBtn);
+    actions.appendChild(upBtn);
+    actions.appendChild(downBtn);
+    actions.appendChild(refreshBtn);
+    
     return actions;
+}
+
+function createIconButton(iconClass, title, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'agent-icon-btn';
+    btn.title = title;
+    btn.innerHTML = `<i class="fas ${iconClass}"></i>`;
+    btn.onclick = onClick;
+    return btn;
+}
+
+function showToast(text) {
+    notificationToast.querySelector('span').textContent = text;
+    notificationToast.classList.remove('hidden');
+    notificationToast.classList.add('show');
+    setTimeout(() => {
+        notificationToast.classList.remove('show');
+        setTimeout(() => notificationToast.classList.add('hidden'), 500);
+    }, 2000);
 }
 
 // --- CORE CHAT ---
@@ -398,55 +453,44 @@ async function sendMessage() {
         
         const data = await response.json();
         
-        clearInterval(logInterval);
-        document.getElementById(thinkingId).remove();
+        clearInterval(thinkingObj.timerInterval);
 
         if (data.success) {
-            let finalMessage = data.message;
-            let messageDiv = null;
-            
-            if (finalMessage.trim() !== "" && finalMessage.trim() !== "[Executed]") {
-                messageDiv = addMessage(finalMessage, 'ai');
-            } else if (!data.has_code) {
-                messageDiv = addMessage("Done.", 'ai');
+            // Render Thoughts if any
+            if (data.thoughts) {
+                await renderThoughts(thinkingObj, data.thoughts);
             } else {
-                messageDiv = addMessage("Script Generated & Sent.", 'ai');
-            }
-            
-            if (data.download_file) {
-                downloadFile(data.download_file.filename, data.download_file.content);
-                addMessage(`Saved ${data.download_file.filename} to your device.`, 'ai');
+                document.getElementById(thinkingObj.id).remove();
             }
 
-            if (!directExecute && data.has_code) {
-                const execPrompt = document.createElement('div');
-                execPrompt.classList.add('execute-prompt-box');
-                execPrompt.innerHTML = `
-                    <div class="exec-title"><i class="fas fa-terminal"></i> Execute script?</div>
-                    <div class="exec-actions">
-                        <button class="exec-run-btn"><i class="fas fa-play"></i> Run</button>
-                        <button class="exec-dismiss-btn"><i class="fas fa-times"></i> Dismiss</button>
-                    </div>
-                `;
+            let messageDiv = addMessage("", 'ai');
+            const textSpan = messageDiv.querySelector('span');
+            
+            // Stream the conversational message
+            if (data.message) {
+                await streamText(textSpan, data.message, 15);
+            }
+
+            // Stream the code if any
+            if (data.has_code) {
+                const codeContainer = document.createElement('div');
+                codeContainer.classList.add('code-stream-container');
+                const codeContent = document.createElement('div');
+                codeContent.classList.add('code-stream-content');
+                codeContainer.appendChild(codeContent);
+                messageDiv.appendChild(codeContainer);
                 
-                execPrompt.querySelector('.exec-run-btn').onclick = async () => {
-                    execPrompt.querySelector('.exec-run-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
-                    await fetch('/api/authorize_execute', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({username: currentUser})
-                    });
-                    execPrompt.innerHTML = '<div class="exec-success"><i class="fas fa-check"></i> Script Executed</div>';
-                };
+                const codeToStream = data.lua_code || "-- Script ready for execution.";
+                await streamText(codeContent, codeToStream, 5);
                 
-                execPrompt.querySelector('.exec-dismiss-btn').onclick = () => {
-                    execPrompt.remove();
-                };
-                
-                if (messageDiv) messageDiv.appendChild(execPrompt);
+                // Add action bar
+                messageDiv.appendChild(createAgenticActions(codeToStream, thinkingObj.id));
+            } else if (data.message) {
+                // If it was just a conversational reply, add a simple reply icon or nothing
             }
 
         } else {
+            document.getElementById(thinkingObj.id).remove();
             addMessage("Error: " + data.error, 'ai');
         }
     } catch (e) {
@@ -474,12 +518,10 @@ function addMessage(text, sender, id = null, isHistoryLoad = false) {
     if (id) div.id = id;
     
     const textNode = document.createElement('span');
-    textNode.innerHTML = text.replace(/\n/g, '<br>');
-    div.appendChild(textNode);
-    
-    if (sender === 'ai') {
-        div.appendChild(createMessageActions(text));
+    if (text) {
+        textNode.innerHTML = text.replace(/\n/g, '<br>');
     }
+    div.appendChild(textNode);
     
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
