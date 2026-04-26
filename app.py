@@ -188,9 +188,16 @@ def chat():
                 return jsonify({"error": f"API Request failed: {str(e)}"}), 500
                 
         else:
-            dynamic_model = genai.GenerativeModel(model_name)
-            response = dynamic_model.generate_content(prompt)
-            text = response.text
+            try:
+                dynamic_model = genai.GenerativeModel(model_name)
+                response = dynamic_model.generate_content(prompt)
+                text = response.text
+            except Exception as e:
+                # Fallback to a very common model name if the selected one fails
+                print(f"Primary model {model_name} failed: {e}. Trying fallback...")
+                fallback_model = genai.GenerativeModel("gemini-2.5-flash")
+                response = fallback_model.generate_content(prompt)
+                text = response.text
         
         reply_message = "Command sent to Roblox!"
         lua_code = ""
