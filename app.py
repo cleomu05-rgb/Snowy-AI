@@ -93,6 +93,8 @@ def status(username):
             "user_img": user["game_data"].get("user_img", ""),
             "game_img": user["game_data"].get("game_img", "")
         }
+        response_data["workspace_preview"] = user["game_data"].get("workspacePreview", [])
+        response_data["remote_preview"] = user["game_data"].get("remotePreview", [])
     return jsonify(response_data)
 
 @app.route('/api/suggestions', methods=['GET'])
