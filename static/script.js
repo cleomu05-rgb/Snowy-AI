@@ -508,6 +508,7 @@ async function sendMessage() {
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
+            keepalive: true,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 username: currentUser, 
