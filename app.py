@@ -249,19 +249,9 @@ def authorize_execute():
     
     if username in user_sessions and user_sessions[username].get("staged_code"):
         user_sessions[username]["pending"] = user_sessions[username]["staged_code"]
+        user_sessions[username]["staged_code"] = None
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "No staged code found"})
-
-@app.route('/api/authorize_execute_direct', methods=['POST'])
-def authorize_execute_direct():
-    data = request.get_json(force=True)
-    username = data.get('username', '').lower()
-    code = data.get('code', '')
-    
-    if username in user_sessions and code:
-        user_sessions[username]["pending"] = code
-        return jsonify({"success": True})
-    return jsonify({"success": False, "error": "Invalid session or no code"})
 
 @app.route('/api/roblox/connect', methods=['POST'])
 def rb_connect():
