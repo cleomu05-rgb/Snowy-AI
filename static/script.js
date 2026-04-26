@@ -26,6 +26,12 @@ const closeSettingsBtn = document.getElementById('close-settings');
 const fastModeToggle = document.getElementById('fast-mode-toggle');
 const directExecuteToggle = document.getElementById('direct-execute-toggle');
 const fixOnThumbsToggle = document.getElementById('fix-on-thumbs-toggle');
+const uiMethodSelect = document.getElementById('ui-method-select');
+const generatingSpeedSlider = document.getElementById('generating-speed');
+const speedValueDisplay = document.getElementById('speed-value');
+const doubleVerifyToggle = document.getElementById('double-verify-toggle');
+
+let lastRobloxErrorTime = 0;
 
 // Sidebar Elements
 const sidebar = document.getElementById('sidebar');
@@ -124,6 +130,11 @@ closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hi
 openSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
 closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 newChatBtn.addEventListener('click', createNewChat);
+
+// --- SETTINGS UPDATES ---
+generatingSpeedSlider.addEventListener('input', (e) => {
+    speedValueDisplay.textContent = e.target.value;
+});
 
 // --- FILE UPLOAD LOGIC ---
 fileUpload.addEventListener('change', (e) => {
@@ -242,6 +253,18 @@ async function startStatusPolling() {
                         document.getElementById('game-icon').src = data.game_data.game_img;
                     }
                 }
+
+                // Check for Roblox Errors (Double Verification)
+                if (data.last_error && data.last_error.time > lastRobloxErrorTime) {
+                    lastRobloxErrorTime = data.last_error.time;
+                    console.warn("Roblox Error Detected:", data.last_error.message);
+                    
+                    if (doubleVerifyToggle.checked) {
+                        addMessage(`<i class="fas fa-exclamation-triangle"></i> <b>Double Verification:</b> Error detected on Roblox. AI is automatically fixing it...<br><small>${data.last_error.message}</small>`, 'ai');
+                        chatInput.value = `FIX THIS ERROR: ${data.last_error.message}\n\nFAILED CODE:\n${data.last_error.code}`;
+                        sendMessage();
+                    }
+                }
                 
             } else {
                 connectionBanner.classList.remove('hidden');
@@ -320,7 +343,16 @@ async function renderThoughts(thinkingObj, thoughtsText) {
     }
 }
 
-async function streamText(element, text, speed = 10) {
+async function streamText(element, text) {
+    const speed = parseInt(generatingSpeedSlider.value);
+    if (speed >= 10) {
+        element.innerHTML = text.replace(/\n/g, '<br>');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return;
+    }
+    
+    const delay = Math.max(0, 50 - (speed * 5)); // Speed 1 = 45ms, Speed 9 = 5ms
+    
     element.innerHTML = '';
     for (let char of text) {
         if (char === '\n') {
@@ -329,7 +361,7 @@ async function streamText(element, text, speed = 10) {
             element.innerHTML += char;
         }
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        await new Promise(r => setTimeout(r, speed));
+        if (delay > 0) await new Promise(r => setTimeout(r, delay));
     }
 }
 
@@ -437,6 +469,7 @@ async function sendMessage() {
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
     const directExecute = directExecuteToggle.checked;
+    const uiMethod = uiMethodSelect.value;
 
     try {
         const response = await fetch('/api/chat', {
@@ -447,7 +480,8 @@ async function sendMessage() {
                 message: fullMessage, 
                 model: selectedModel,
                 fast_mode: fastMode,
-                direct_execute: directExecute
+                direct_execute: directExecute,
+                ui_method: uiMethod
             })
         });
         
