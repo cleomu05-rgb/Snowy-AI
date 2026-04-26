@@ -52,6 +52,37 @@
                     <span class="slider round"></span>
                 </label>
             </div>
+            <div class="setting-item">
+                <div class="setting-text">
+                    <strong>UI Method</strong>
+                    <p>Choose the GUI library for your scripts.</p>
+                </div>
+                <select id="ui-method-select" class="settings-select">
+                    <option value="orion" selected>Orion Library</option>
+                    <option value="rayfield">Rayfield Library</option>
+                    <option value="custom">Custom (AI Generated)</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <div class="setting-text">
+                    <strong>Generating Speed</strong>
+                    <p>Speed of text streaming (1: Slow, 10: Instant).</p>
+                </div>
+                <div class="range-container">
+                    <input type="range" id="generating-speed" min="1" max="10" value="5">
+                    <span id="speed-value">5</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-text">
+                    <strong>Double Verification</strong>
+                    <p>Auto-fix scripts by analyzing Roblox console errors in real-time.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="double-verify-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
         </div>
     </div>
 
