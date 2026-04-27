@@ -267,10 +267,19 @@ async function startStatusPolling() {
                     lastRobloxErrorTime = data.last_error.time;
                     console.warn("Roblox Error Detected:", data.last_error.message);
                     
-                    if (doubleVerifyToggle.checked) {
-                        addMessage(`<i class="fas fa-exclamation-triangle"></i> <b>Double Verification:</b> Error detected on Roblox. AI is automatically fixing it...<br><small>${data.last_error.message}</small>`, 'ai');
-                        chatInput.value = `FIX THIS ERROR: ${data.last_error.message}\n\nFAILED CODE:\n${data.last_error.code}`;
-                        sendMessage();
+                    if (doubleVerifyToggle.checked && lastAICodeContent) {
+                        // In-place Fix
+                        lastAIResponseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const errorOverlay = document.createElement('div');
+                        errorOverlay.className = 'error-overlay';
+                        errorOverlay.innerHTML = `<i class="fas fa-magic"></i> Error detected: ${data.last_error.message}<br>Auto-fixing in place...`;
+                        lastAIResponseContainer.appendChild(errorOverlay);
+                        
+                        setTimeout(async () => {
+                            errorOverlay.remove();
+                            // Trigger the fix but target the existing container
+                            await triggerInPlaceFix(data.last_error.message, data.last_error.code);
+                        }, 2000);
                     }
                 }
                 
@@ -377,15 +386,20 @@ async function renderThoughts(thinkingObj, thoughtsText) {
     }
 }
 
+let lastAIResponseContainer = null;
+let lastAICodeContent = null;
+
 async function streamText(element, text) {
     const speed = parseInt(generatingSpeedSlider.value);
+    const isAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 100;
+
     if (speed >= 10) {
         element.innerHTML = text.replace(/\n/g, '<br>');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
         return;
     }
     
-    const delay = Math.max(0, 50 - (speed * 5)); // Speed 1 = 45ms, Speed 9 = 5ms
+    const delay = Math.max(0, 50 - (speed * 5));
     
     element.innerHTML = '';
     for (let char of text) {
@@ -394,7 +408,7 @@ async function streamText(element, text) {
         } else {
             element.innerHTML += char;
         }
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
         if (delay > 0) await new Promise(r => setTimeout(r, delay));
     }
 }
@@ -549,13 +563,18 @@ async function sendMessage() {
                 codeContainer.appendChild(codeContent);
                 messageDiv.appendChild(codeContainer);
                 
+                // Store containers for potential in-place fixing
+                lastAIResponseContainer = messageDiv;
+                lastAICodeContent = codeContent;
+                
                 const codeToStream = data.lua_code || "-- Script ready for execution.";
                 await streamText(codeContent, codeToStream, 5);
                 
                 // Add action bar
                 messageDiv.appendChild(createAgenticActions(codeToStream, thinkingObj.id));
             } else if (data.message) {
-                // If it was just a conversational reply, add a simple reply icon or nothing
+                lastAIResponseContainer = messageDiv;
+                lastAICodeContent = null;
             }
 
         } else {
@@ -615,3 +634,31 @@ copyScriptBtn.addEventListener('click', () => {
         setTimeout(() => { copyScriptBtn.textContent = "Copy"; }, 2000);
     });
 });
+async function triggerInPlaceFix(errorMsg, failedCode) {
+    if (!lastAICodeContent) return;
+    
+    // Clear the code and show a "fixing" animation
+    lastAICodeContent.innerHTML = "<i class='fas fa-sync fa-spin'></i> Analyzing error...";
+    
+    const response = await fetch('/api/chat', {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            username: currentUser, 
+            message: `FIX THIS ERROR: ${errorMsg}\n\nFAILED CODE:\n${failedCode}`, 
+            model: document.getElementById('model-select').value,
+            fast_mode: fastModeToggle.checked,
+            direct_execute: directExecuteToggle.checked,
+            ui_method: uiMethodSelect.value
+        })
+    });
+    
+    const data = await response.json();
+    if (data.success && data.lua_code) {
+        // Stream the fix into the SAME container
+        await streamText(lastAICodeContent, data.lua_code);
+        // Update the action bar if needed (optional)
+        showToast("Script Auto-Fixed!");
+    }
+}
