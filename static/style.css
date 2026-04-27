@@ -274,10 +274,13 @@ input:checked + .slider:before {
 #chat-screen {
     width: 100%;
     max-width: 850px;
+    height: 100vh;
     background: transparent;
     position: relative;
     padding: 1rem;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 header {
@@ -404,7 +407,7 @@ header {
     background: rgba(255, 255, 255, 0.2);
 }
 
-.chat-messages {
+#chat-messages {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
@@ -416,7 +419,7 @@ header {
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-.chat-messages::-webkit-scrollbar {
+#chat-messages::-webkit-scrollbar {
     width: 6px;
 }
 
