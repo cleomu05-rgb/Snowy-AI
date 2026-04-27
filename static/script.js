@@ -133,6 +133,19 @@ openSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
 closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 newChatBtn.addEventListener('click', createNewChat);
 
+// --- CHAT INPUT LOGIC ---
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = chatInput.scrollHeight + 'px';
+});
+
 // --- SETTINGS UPDATES ---
 generatingSpeedSlider.addEventListener('input', (e) => {
     speedValueDisplay.textContent = e.target.value;
