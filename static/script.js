@@ -5,6 +5,8 @@ let currentChatId = null;
 let userChats = {};
 let currentGameName = "";
 let currentWorkspaceSample = "";
+let currentWorkspaceItems = [];
+let currentInventoryItems = [];
 
 // UI Elements
 const loginScreen = document.getElementById('login-screen');
@@ -33,7 +35,6 @@ const doubleVerifyToggle = document.getElementById('double-verify-toggle');
 const deepAnalysisToggle = document.getElementById('deep-analysis-toggle');
 
 let lastRobloxErrorTime = 0;
-let currentInventorySample = "";
 
 // Sidebar Elements
 const sidebar = document.getElementById('sidebar');
@@ -256,15 +257,17 @@ async function startStatusPolling() {
                     currentGameName = data.game_data.gameName;
                     
                     if (data.workspace_preview && data.workspace_preview.length > 0) {
-                        currentWorkspaceSample = data.workspace_preview[0].replace(/\[.*?\]\s*/, '').split(' (')[0];
+                        currentWorkspaceItems = data.workspace_preview.map(item => item.replace(/\[.*?\]\s*/g, '').split(' (')[0]);
+                        currentWorkspaceSample = currentWorkspaceItems[0];
                     } else {
                         currentWorkspaceSample = "Workspace";
+                        currentWorkspaceItems = [];
                     }
 
                     if (data.inventory_preview && data.inventory_preview.length > 0) {
-                        currentInventorySample = data.inventory_preview[0].split(' (')[0];
+                        currentInventoryItems = data.inventory_preview.map(item => item.split(' (')[0]);
                     } else {
-                        currentInventorySample = "Inventory";
+                        currentInventoryItems = [];
                     }
 
                     if (data.game_data.user_img) {
@@ -336,11 +339,24 @@ function createThinkingBlock(id, userQuery = "") {
         else if (query.includes("coin") || query.includes("money") || query.includes("treasure")) primaryTarget = "Currency & Items";
         else if (query.includes("remote") || query.includes("event")) primaryTarget = "Remote Events";
 
+        // Smart Discovery for logs
+        let foundTool = "Empty Inventory";
+        if (currentInventoryItems.length > 0) {
+            const match = currentInventoryItems.find(t => query.includes(t.toLowerCase()));
+            foundTool = match || currentInventoryItems[0];
+        }
+
+        let analyzedObj = currentWorkspaceSample || "Workspace";
+        if (currentWorkspaceItems.length > 0) {
+            const match = currentWorkspaceItems.find(i => query.includes(i.toLowerCase()));
+            analyzedObj = match || currentWorkspaceItems[0];
+        }
+
         const deepLogs = [
-            `Analyzing hierarchy of ${currentWorkspaceSample || 'Workspace'}...`,
+            `Analyzing hierarchy of ${analyzedObj}...`,
             `Scanning for ${primaryTarget}...`,
             `Searching for tools in Backpack...`,
-            `Found: ${currentInventorySample || 'Empty Inventory'}`,
+            `Found: ${foundTool}`,
             `Mapping execution path for request...`
         ];
         
