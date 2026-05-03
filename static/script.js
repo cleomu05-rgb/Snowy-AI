@@ -201,31 +201,62 @@ async function loadSuggestions() {
     }
 }
 
+async function safeFetchJson(url, options = {}) {
+    const response = await fetch(url, options);
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType && contentType.includes("application/json");
+
+    if (!response.ok) {
+        const text = await response.text();
+        let msg = `Server Error (${response.status})`;
+        if (isJson) {
+            try {
+                const json = JSON.parse(text);
+                msg = json.error || msg;
+            } catch (e) {}
+        } else if (text.includes("<!DOCTYPE html>") || text.includes("<html")) {
+            msg = "The server returned HTML instead of JSON. This usually means the server is still starting up or the URL is incorrect.";
+        }
+        throw new Error(msg);
+    }
+
+    if (!isJson) {
+        const text = await response.text();
+        if (text.includes("<!DOCTYPE html>") || text.includes("<html")) {
+             throw new Error("Received HTML instead of JSON. Server might be starting up.");
+        }
+        throw new Error("Expected JSON but received: " + text.substring(0, 50));
+    }
+    return await response.json();
+}
+
 // --- LOGIN ---
 loginBtn.addEventListener('click', async () => {
     const username = usernameInput.value.trim().toLowerCase();
     if (username) {
         currentUser = username;
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-            loginScreen.classList.add('hidden');
-            chatScreen.classList.remove('hidden');
-            loadChatHistory();
-            if (Object.keys(userChats).length === 0) {
-                createNewChat();
-            } else {
-                // Load most recent chat by default
-                const chatIds = Object.keys(userChats).sort((a, b) => b - a);
-                loadChat(chatIds[0]);
+        try {
+            const data = await safeFetchJson('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            
+            if (data.success) {
+                loginScreen.classList.add('hidden');
+                chatScreen.classList.remove('hidden');
+                loadChatHistory();
+                if (Object.keys(userChats).length === 0) {
+                    createNewChat();
+                } else {
+                    const chatIds = Object.keys(userChats).sort((a, b) => b - a);
+                    loadChat(chatIds[0]);
+                }
+                startStatusPolling();
+                loadSuggestions();
             }
-            startStatusPolling();
-            loadSuggestions();
+        } catch (e) {
+            alert("Login error: " + e.message);
         }
     }
 });
@@ -242,8 +273,7 @@ async function startStatusPolling() {
     const poll = async () => {
         if (!currentUser) return;
         try {
-            const response = await fetch(`/api/status/${currentUser}`);
-            const data = await response.json();
+            const data = await safeFetchJson(`/api/status/${currentUser}`);
             
             if (data.connected) {
                 connectionBanner.classList.add('hidden');
@@ -557,7 +587,7 @@ async function sendMessage() {
     const uiMethod = uiMethodSelect.value;
 
     try {
-        const response = await fetch('/api/chat', {
+        const data = await safeFetchJson('/api/chat', {
             method: 'POST',
             keepalive: true,
             headers: { 'Content-Type': 'application/json' },
@@ -570,8 +600,6 @@ async function sendMessage() {
                 ui_method: uiMethod
             })
         });
-        
-        const data = await response.json();
         
         clearInterval(thinkingObj.timerInterval);
 
