@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from werkzeug.exceptions import HTTPException
 import google.generativeai as genai
 import os
 import urllib.request
@@ -7,6 +8,11 @@ import json
 import time
 
 app = Flask(__name__)
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if isinstance(e, HTTPException):
+        return jsonify({"success": False, "error": e.description}), e.code
+    return jsonify({"success": False, "error": str(e)}), 500
 
 # --- CONFIGURATION API ---
 API_KEY = os.environ.get("GEMINI_API_KEY")
