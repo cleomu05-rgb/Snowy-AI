@@ -307,7 +307,7 @@ async function startStatusPolling() {
 }
 
 // --- THINKING BLOCK ---
-function createThinkingBlock(id) {
+function createThinkingBlock(id, userQuery = "") {
     const div = document.createElement('div');
     div.classList.add('ai-thinking-block');
     div.id = id;
@@ -329,11 +329,19 @@ function createThinkingBlock(id) {
     
     // Initial Deep Analysis Logs (Simulated for flavor but using real data)
     if (deepAnalysisToggle.checked) {
+        const query = userQuery.toLowerCase();
+        let primaryTarget = "relevant objects";
+        if (query.includes("plot")) primaryTarget = "Plots & Bases";
+        else if (query.includes("player") || query.includes("esp")) primaryTarget = "Players & Entities";
+        else if (query.includes("coin") || query.includes("money") || query.includes("treasure")) primaryTarget = "Currency & Items";
+        else if (query.includes("remote") || query.includes("event")) primaryTarget = "Remote Events";
+
         const deepLogs = [
+            `Analyzing hierarchy of ${currentWorkspaceSample || 'Workspace'}...`,
+            `Scanning for ${primaryTarget}...`,
             `Searching for tools in Backpack...`,
             `Found: ${currentInventorySample || 'Empty Inventory'}`,
-            `Analyzing hierarchy of ${currentWorkspaceSample || 'Workspace'}...`,
-            `Mapping path for current request...`
+            `Mapping execution path for request...`
         ];
         
         let logIdx = 0;
@@ -525,7 +533,7 @@ async function sendMessage() {
     chatInput.value = '';
 
     const thinkingId = 'thinking-' + Date.now();
-    const thinkingObj = createThinkingBlock(thinkingId);
+    const thinkingObj = createThinkingBlock(thinkingId, messageText);
 
     const selectedModel = document.getElementById('model-select').value;
     const fastMode = fastModeToggle.checked;
