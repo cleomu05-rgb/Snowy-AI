@@ -137,34 +137,43 @@ def chat():
     
     if user_data.get("game_data"):
         gd = user_data["game_data"]
+        workspace_items = gd.get('workspacePreview', [])
+        priority_items = [i for i in workspace_items if "[PRIORITY]" in i][:40]
+        other_items = [i for i in workspace_items if "[PRIORITY]" not in i][:20]
+        
         game_context = f"""
         [LIVE ROBLOX GAME CONTEXT]
         Game Name: {gd.get('gameName')}
         Creator: {gd.get('gameCreator')}
-        Created: {gd.get('gameCreated')}
         PlaceId: {gd.get('placeId')}
-        Description: {gd.get('gameDescription')}
         
-        [WORKSPACE PREVIEW (Top 15 items)]:
-        {', '.join(gd.get('workspacePreview', []))}
+        [PRIORITY OBJECTS FOUND]:
+        {', '.join(priority_items)}
         
-        [REMOTE EVENTS PREVIEW]:
-        {', '.join(gd.get('remotePreview', []))}
+        [OTHER WORKSPACE ITEMS]:
+        {', '.join(other_items)}
         
-        [LOCALPLAYER INVENTORY (Tools)]:
+        [REMOTE EVENTS]:
+        {', '.join(gd.get('remotePreview', [])[:30])}
+        
+        [INVENTORY (Tools)]:
         {', '.join(gd.get('inventoryPreview', []))}
         """
     
     wants_file = "file" in message.lower() or ".lua" in message.lower() or ".txt" in message.lower()
 
     # UI Instruction building
-    ui_instruction = f"Use {ui_method} library for the GUI."
+    ui_instruction = ""
     if ui_method == "custom":
         ui_instruction = "Build your own custom ScreenGui. Make it draggable and mobile-friendly. Do not use Orion or Rayfield."
     elif ui_method == "rayfield":
-        ui_instruction = "Use Rayfield Library for the GUI."
+        ui_instruction = """Use Rayfield Library. You MUST include this loadstring at the top:
+        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+        """
     else:
-        ui_instruction = "Use Orion Library for the GUI."
+        ui_instruction = """Use Orion Library. You MUST include this loadstring at the top:
+        local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+        """
 
     prompt = f"""
     You are Snowy AI, an extremely advanced, autonomous Roblox Exploit Developer AI (Agentic AI).
