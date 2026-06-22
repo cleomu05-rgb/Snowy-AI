@@ -115,6 +115,31 @@ local function connect()
     end
 end
 
+local function reportError(errorMsg, failedCode)
+    local payload = {
+        username = username,
+        error = errorMsg,
+        command = failedCode
+    }
+    
+    pcall(function()
+        if requestFunc then
+            requestFunc({
+                Url = apiUrl .. "/api/roblox/error",
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = HttpService:JSONEncode(payload)
+            })
+        else
+            HttpService:PostAsync(
+                apiUrl .. "/api/roblox/error",
+                HttpService:JSONEncode(payload),
+                Enum.HttpContentType.ApplicationJson
+            )
+        end
+    end)
+end
+
 local function pollCommands()
     while true do
         local successPoll, body = false, nil
@@ -140,10 +165,16 @@ local function pollCommands()
                 print("Snowy AI: ANALYSED Request...")
                 local func, err = loadstring(data.command)
                 if func then
-                    pcall(func)
-                    print("Snowy AI: EXECUTED")
+                    local successRun, runErr = pcall(func)
+                    if successRun then
+                        print("Snowy AI: EXECUTED")
+                    else
+                        warn("Snowy AI: Runtime Error - " .. tostring(runErr))
+                        reportError(tostring(runErr), data.command)
+                    end
                 else
                     warn("Snowy AI: Compilation Error - " .. tostring(err))
+                    reportError(tostring(err), data.command)
                 end
             end
         end
