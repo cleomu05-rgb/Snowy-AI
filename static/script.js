@@ -152,6 +152,26 @@ fileUpload.addEventListener('change', (e) => {
     }
 });
 
+// --- FORM SUBMISSION HANDLER ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Prevent form submission to use our custom handler
+    const loginForm = document.querySelector('#login-screen form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            loginBtn.click();
+        });
+    }
+    
+    // Discord button handler (not configured)
+    const discordBtn = document.querySelector('.button-discord');
+    if (discordBtn) {
+        discordBtn.addEventListener('click', () => {
+            alert('Discord login is not configured. Please use username login instead.');
+        });
+    }
+});
+
 // --- NOTIFICATION ---
 function showNotification() {
     if (hasShownNotification) return;
