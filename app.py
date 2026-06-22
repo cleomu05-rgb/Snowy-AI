@@ -75,6 +75,26 @@ def get_roblox_thumbnails(user_id, place_id):
 def index():
     return render_template('index.html')
 
+@app.route('/raw/script')
+def raw_script():
+    user_agent = request.headers.get('User-Agent', '')
+    if 'roblox' not in user_agent.lower():
+        return "Error: No permission to access this resource.", 403
+    
+    try:
+        static_dir = os.path.join(app.root_path, 'static')
+        file_path = os.path.join(static_dir, 'snowy_ai.lua')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Replace local apiUrl with current request host dynamically
+        current_root = request.url_root.rstrip('/')
+        content = content.replace('local apiUrl = "https://snowy-ai.onrender.com"', f'local apiUrl = "{current_root}"')
+        
+        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    except Exception as e:
+        return f"Error reading script file: {str(e)}", 500
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json(force=True)
@@ -165,7 +185,44 @@ def chat():
     # UI Instruction building
     ui_instruction = ""
     if ui_method == "custom":
-        ui_instruction = "Build your own custom ScreenGui. Make it draggable and mobile-friendly. Do not use Orion or Rayfield."
+        ui_instruction = """Build a highly polished, fully functional custom Roblox ScreenGui.
+        Follow these strict guidelines for custom UI:
+        1. Place the ScreenGui under game:GetService("CoreGui") (or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") as fallback).
+        2. Create a main Frame. Make it modern (dark theme: background Color3.fromRGB(25, 25, 25), rounded corners with UICorner, sleek stroke with UIStroke).
+        3. Make the GUI fully draggable by including a robust drag script:
+           local UserInputService = game:GetService("UserInputService")
+           local dragging, dragInput, dragStart, startPos
+           local function update(input)
+               local delta = input.Position - dragStart
+               frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+           end
+           frame.InputBegan:Connect(function(input)
+               if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                   dragging = true
+                   dragStart = input.Position
+                   startPos = frame.Position
+                   input.Changed:Connect(function()
+                       if input.UserInputState == Enum.UserInputState.End then
+                           dragging = false
+                       end
+                   end)
+               end
+           end)
+           frame.InputChanged:Connect(function(input)
+               if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                   dragInput = input
+               end
+           end)
+           UserInputService.InputChanged:Connect(function(input)
+               if input == dragInput and dragging then
+                   update(input)
+               end
+           end)
+        4. Include a Close button or a toggle keybind (e.g., Enum.KeyCode.RightControl) to hide/show the frame.
+        5. For each control (buttons, toggles), add text labels and functional event handlers (e.g. MouseButton1Click) that perform the exploit action.
+        6. Clean layout: use a UIListLayout or UIPadding for perfect alignment of buttons and options.
+        Do NOT use Orion, Rayfield, or other external libraries. Generate pure Roblox Lua UI code.
+        """
     elif ui_method == "rayfield":
         ui_instruction = """Use Rayfield Library. You MUST include this loadstring at the top:
         local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
