@@ -221,6 +221,12 @@ def chat():
         4. Include a Close button or a toggle keybind (e.g., Enum.KeyCode.RightControl) to hide/show the frame.
         5. For each control (buttons, toggles), add text labels and functional event handlers (e.g. MouseButton1Click) that perform the exploit action.
         6. Clean layout: use a UIListLayout or UIPadding for perfect alignment of buttons and options.
+        7. CRITICAL: When creating value changers (speed, jump power, etc.), include:
+           - A TextBox for precise input
+           - A Slider for quick adjustment  
+           - A Button to apply the changes
+           - Display current values
+           - Working event handlers that actually modify game properties
         Do NOT use Orion, Rayfield, or other external libraries. Generate pure Roblox Lua UI code.
         """
     elif ui_method == "rayfield":
@@ -262,6 +268,13 @@ def chat():
     -- Your OP script here
     ```
     
+    [RESPONSE FORMAT FOR SIMPLE QUESTIONS]
+    For simple questions like "what's my username", "what game am I playing", etc:
+    - Respond with ONLY the direct answer, no conversational fluff
+    - Example: If asked "what's my username", respond only with the username
+    - Example: If asked "what's my player ID", respond only with the ID number
+    - Do NOT say "Hello, your username is..." or "The answer is..."
+    
     [RULES]
     - IMPORTANT: The [WORKSPACE PREVIEW] is only a SAMPLE. Your code must be DYNAMIC. If you see a 'Plot' in the preview, use a loop to find ALL objects named 'Plot' or similar in the game.
     - Use EXACT names for tools from the [INVENTORY] list.
@@ -269,6 +282,16 @@ def chat():
     - For 'Rainbow' effects, use tick() with HSV: Color3.fromHSV(tick() * speed % 1, 1, 1).
     - For ESP, always use a loop (for i,v in pairs) and handles for clean removal.
     - Mention specific items found in the context to show you are actually analyzing the game.
+    
+    [UI GENERATION RULES - CRITICAL]
+    - When asked to create a UI with specific controls (jump power, speed changer, etc.), you MUST create FULLY FUNCTIONAL controls
+    - Each control MUST have working event handlers that actually change the values
+    - For sliders: Include TextBox inputs for precise value entry AND Slider controls
+    - For buttons: Include MouseButton1Click events that perform the actual actions
+    - Make sure all controls are VISIBLE and properly positioned within the frame
+    - Add clear labels for each control
+    - Example for speed changer: Include a TextBox for entering speed value, a button to apply it, and show current speed
+    - Do NOT create empty frames or UIs without working controls
     """
     
     try:
