@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark bg-background">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snowy AI - Roblox Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="font-sans antialiased">
@@ -15,21 +15,15 @@
         <span>Connected to Roblox</span>
     </div>
 
-    <!-- Sidebar / Chat History -->
-    <div id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <h2>Chats</h2>
-            <button id="close-sidebar" class="icon-btn"><i class="fas fa-times"></i></button>
-        </div>
-        <button id="new-chat-btn" class="new-chat-btn"><i class="fas fa-plus"></i> New Chat</button>
-        <div id="chat-history-list" class="chat-history-list">
-            <!-- Chat history items will be generated here -->
-        </div>
-    </div>
-
     <!-- Login Screen (DexMCP Style) -->
-    <div id="login-screen" class="screen">
-        <main class="min-h-screen bg-background flex items-center justify-center px-3 sm:px-4 py-6">
+    <div id="login-screen" class="screen h-screen bg-background flex relative">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="orb-extra"></div>
+            <div class="grain"></div>
+        </div>
+        
+        <main class="min-h-screen flex items-center justify-center px-3 sm:px-4 py-6 relative z-10">
             <div class="card text-card-foreground flex flex-col gap-6 border py-6 shadow-sm w-full max-w-md rounded-[12px] bg-card border-border">
                 <div class="card-header">
                     <a class="flex items-center justify-center gap-2 mb-4" href="#">
@@ -68,67 +62,143 @@
         </main>
     </div>
 
-    <div id="chat-screen" class="screen hidden">
-        <header>
-            <button id="open-sidebar" class="icon-btn"><i class="fas fa-bars"></i></button>
-            <div class="logo-area">
-                <span>Snowy AI</span>
-            </div>
-            
-            <!-- Telemetry Container -->
-            <div id="live-telemetry" class="live-telemetry hidden">
-                <div class="telemetry-card">
-                    <img id="user-avatar" src="" alt="User">
-                    <div class="card-info">
-                        <span class="card-title">User</span>
-                        <span id="user-name-display" class="card-text">@username</span>
-                    </div>
-                </div>
-                <div class="telemetry-card">
-                    <img id="game-icon" src="" alt="Game">
-                    <div class="card-info">
-                        <span class="card-title">Game</span>
-                        <span id="game-name-display" class="card-text">Playing Unknown</span>
-                    </div>
-                </div>
-            </div>
-            <div class="model-selector">
-                <select id="model-select">
-                    <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                </select>
-            </div>
-
-        </header>
-
-        <main id="chat-messages">
-            <!-- Messages will appear here -->
-        </main>
-
-        <div id="connection-banner" class="banner">
-            <div class="banner-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Execute the script in your Roblox executor to connect</span>
-                <button id="copy-script-btn">Copy</button>
-            </div>
+    <!-- Dashboard Screen -->
+    <div id="chat-screen" class="screen hidden h-screen bg-background flex relative">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="orb-extra"></div>
+            <div class="grain"></div>
         </div>
 
-        <div class="suggestions" id="suggestions-container">
-            <button class="suggestion-btn">Loading...</button>
-        </div>
-
-        <footer>
-            <div id="file-preview" class="hidden"></div>
-            <div class="input-container">
-                <input type="file" id="file-upload" accept=".txt,.lua" style="display: none;">
-                <button class="plus-btn" onclick="document.getElementById('file-upload').click()"><i class="fas fa-plus"></i></button>
-                <textarea id="chat-input" placeholder="Message Snowy AI..." rows="1"></textarea>
-                <div class="input-actions">
-                    <button class="mic-btn"><i class="fas fa-microphone"></i></button>
-                    <button id="send-btn" class="send-btn"><i class="fas fa-arrow-up"></i></button>
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full w-[85%] max-w-[280px] sm:w-64 bg-black/40 backdrop-blur-2xl border-r border-sidebar-border flex flex-col z-50">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" class="w-5 h-5 flex-shrink-0">
+                        <path fill="#DD2E44" d="M36 20.917c0-.688-2.895-.5-3.125-1s3.208-4.584 2.708-5.5-5.086 1.167-5.375.708c-.288-.458.292-3.5-.208-3.875s-5.25 4.916-5.917 4.292c-.666-.625 1.542-10.5 1.086-10.698-.456-.198-3.419 1.365-3.793 1.282C21.002 6.042 18.682 0 18 0s-3.002 6.042-3.376 6.125c-.374.083-3.337-1.48-3.793-1.282-.456.198 1.752 10.073 1.085 10.698C11.25 16.166 6.5 10.875 6 11.25s.08 3.417-.208 3.875c-.289.458-4.875-1.625-5.375-.708s2.939 5 2.708 5.5-3.125.312-3.125 1 8.438 5.235 9 5.771c.562.535-2.914 2.802-2.417 3.229.576.496 3.839-.83 10.417-.957V35c0 .553.448 1 1 1 .553 0 1-.447 1-1v-6.04c6.577.127 9.841 1.453 10.417.957.496-.428-2.979-2.694-2.417-3.229.562-.536 9-5.084 9-5.771z">
+                        </path>
+                    </svg>
+                    <div class="inline-flex items-center gap-2 text-[11px] font-light w-full min-w-0">
+                        <span class="block w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+                        <span class="text-muted-foreground/85">Bridge hors-ligne</span>
+                        <button type="button" class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/10 bg-white/[0.04] text-foreground/80 hover:bg-white/[0.08] hover:text-foreground transition-colors text-[10px]" onclick="copyBridge()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                            </svg>
+                            Copier
+                        </button>
+                    </div>
+                </div>
+                <button id="close-sidebar" class="size-9 md:hidden h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-foreground rounded-[5px] hover:bg-transparent">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="border-t border-sidebar-border mx-4"></div>
+            <div class="p-4 space-y-2">
+                <button id="new-chat-btn" class="inline-flex items-center whitespace-nowrap text-[13px] transition-all h-9 px-4 py-2 has-[>svg]:px-3 w-full justify-start gap-2 bg-transparent hover:bg-[var(--chat-active)] text-sidebar-foreground rounded-[5px] font-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted-foreground">
+                        <path d="M13 21h8"></path>
+                        <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+                    </svg>
+                    New Conversation
+                </button>
+                <button class="inline-flex items-center whitespace-nowrap text-[13px] transition-all h-9 px-4 py-2 has-[>svg]:px-3 w-full justify-start gap-2 bg-transparent hover:bg-[var(--chat-active)] text-sidebar-foreground rounded-[5px] font-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted-foreground">
+                        <path d="m21 21-4.34-4.34"></path>
+                        <circle cx="11" cy="11" r="8"></circle>
+                    </svg>
+                    Search
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-4">
+                <div id="chat-history-list" class="chat-history-list">
+                    <!-- Chat history items will be generated here -->
                 </div>
             </div>
-        </footer>
+            <div class="p-4">
+                <button class="w-full flex items-center gap-3 p-2 rounded-[5px] hover:bg-[var(--chat-active)] transition-colors cursor-pointer">
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">U</div>
+                    <div class="flex-1 min-w-0 text-left">
+                        <p class="text-sm text-sidebar-foreground truncate font-light" id="current-username">User</p>
+                    </div>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile Overlay -->
+        <div id="mobile-overlay" class="md:hidden fixed inset-0 bg-black/50 z-40 hidden"></div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col md:ml-64 min-w-0 relative z-10">
+            <div class="flex-1 overflow-hidden">
+                <div class="flex flex-col h-full relative overflow-hidden">
+                    <!-- Chat Messages Area -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto px-4 pt-6 pb-6">
+                        <div class="max-w-3xl mx-auto space-y-6 pb-32">
+                            <!-- Welcome Message -->
+                            <div id="welcome-message" class="text-center">
+                                <h1 class="text-2xl md:text-3xl font-light bg-gradient-to-b from-white via-white/95 to-white/55 bg-clip-text text-transparent drop-shadow-[0_1px_12px_rgba(255,255,255,0.08)]">
+                                    Bienvenue, sur quoi tu travailles ?
+                                </h1>
+                            </div>
+                            <!-- Messages will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Connection Banner -->
+                    <div id="connection-banner" class="banner hidden">
+                        <div class="banner-content">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Execute the script in your Roblox executor to connect</span>
+                            <button id="copy-script-btn">Copy</button>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="absolute left-1/2 -translate-x-1/2 w-full max-w-3xl px-2 sm:px-4 bottom-8">
+                        <form class="relative">
+                            <div class="flex items-center bg-input rounded-[26px] border border-[var(--input-border)]">
+                                <input type="file" id="file-upload" accept="image/*,.txt,.lua,.luau" multiple style="display: none;">
+                                <button type="button" class="h-8 w-8 ml-2 flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-foreground/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all hover:bg-white/[0.07] hover:border-white/15 hover:text-foreground" onclick="document.getElementById('file-upload').click()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5v14"></path>
+                                    </svg>
+                                </button>
+                                <input type="text" id="chat-input" placeholder="Connecte le bridge dans Roblox pour discuter" class="flex-1 bg-transparent text-foreground placeholder:text-[var(--placeholder)] py-3 px-2 outline-none font-light disabled:opacity-60 disabled:cursor-not-allowed" disabled>
+                                <div class="flex items-center gap-1.5 px-2 mr-1">
+                                    <!-- Telemetry -->
+                                    <div id="live-telemetry" class="live-telemetry hidden flex items-center gap-2">
+                                        <img id="user-avatar" class="w-6 h-6 rounded-full" src="" alt="">
+                                        <div id="game-icon" class="w-6 h-6 rounded" src="" alt=""></div>
+                                    </div>
+                                    
+                                    <!-- Model Selector -->
+                                    <div class="model-selector">
+                                        <select id="model-select" class="bg-transparent text-muted-foreground outline-none text-sm">
+                                            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                                            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button id="send-btn" class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-[13px] font-medium transition-all h-8 px-4 bg-[#ef4444] text-white hover:bg-[#dc2626]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                            <path d="M22 2L11 13"></path>
+                                            <polygon points="22 2 15 22 11 13"></polygon>
+                                            <polygon points="22 2 2 9 11 13"></polygon>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
