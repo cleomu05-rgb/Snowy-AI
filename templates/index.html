@@ -15,86 +15,7 @@
         <span>Connected to Roblox</span>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <span class="close-btn" id="close-settings">&times;</span>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Fast Mode</strong>
-                    <p>Auto-build scripts without asking for authorization.</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="fast-mode-toggle" checked>
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Direct Execute</strong>
-                    <p>Auto-execute scripts on Roblox directly.</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="direct-execute-toggle">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Fix on Thumbs Down</strong>
-                    <p>AI will automatically try to fix the script if you thumb it down.</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="fix-on-thumbs-toggle" checked>
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>UI Method</strong>
-                    <p>Choose the GUI library for your scripts.</p>
-                </div>
-                <select id="ui-method-select" class="settings-select">
-                    <option value="orion" selected>Orion Library</option>
-                    <option value="rayfield">Rayfield Library</option>
-                    <option value="custom">Custom (AI Generated)</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Generating Speed</strong>
-                    <p>Speed of text streaming (1: Slow, 10: Instant).</p>
-                </div>
-                <div class="range-container">
-                    <input type="range" id="generating-speed" min="1" max="10" value="5">
-                    <span id="speed-value">5</span>
-                </div>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Double Verification</strong>
-                    <p>Auto-fix scripts by analyzing Roblox console errors in real-time.</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="double-verify-toggle">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <div class="setting-text">
-                    <strong>Show Deep Analysis</strong>
-                    <p>Show detailed logs of what the AI is analyzing (Backpack, Workspace, etc).</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="deep-analysis-toggle" checked>
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Sidebar / Chat History -->
     <div id="sidebar" class="sidebar">
@@ -123,7 +44,6 @@
         <header>
             <button id="open-sidebar" class="icon-btn"><i class="fas fa-bars"></i></button>
             <div class="logo-area">
-                <i class="fas fa-snowflake"></i>
                 <span>Snowy AI</span>
             </div>
             
@@ -155,9 +75,7 @@
                     <option value="step-3.5-flash">Step 3.5 Flash (StepFun)</option>
                 </select>
             </div>
-            <div class="settings">
-                <i class="fas fa-cog" id="open-settings"></i>
-            </div>
+
         </header>
 
         <main id="chat-messages">
