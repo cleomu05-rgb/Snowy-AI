@@ -300,7 +300,7 @@ def chat():
             except Exception as e:
                 # Fallback to a very common model name if the selected one fails
                 print(f"Primary model {model_name} failed: {e}. Trying fallback...")
-                fallback_model = genai.GenerativeModel("gemini-1.5-flash")
+                fallback_model = genai.GenerativeModel("gemini-2.5-flash")
                 response = fallback_model.generate_content(prompt)
                 text = response.text
         
