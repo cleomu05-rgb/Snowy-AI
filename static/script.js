@@ -20,18 +20,12 @@ const chatMessages = document.getElementById('chat-messages');
 const copyScriptBtn = document.getElementById('copy-script-btn');
 const notificationToast = document.getElementById('notification-toast');
 const suggestionsContainer = document.getElementById('suggestions-container');
-
-// Settings Elements
-let lastRobloxError = null;
-
-let lastRobloxErrorTime = 0;
-
-// Sidebar Elements
 const sidebar = document.getElementById('sidebar');
-const openSidebarBtn = document.getElementById('open-sidebar');
 const closeSidebarBtn = document.getElementById('close-sidebar');
 const newChatBtn = document.getElementById('new-chat-btn');
 const chatHistoryList = document.getElementById('chat-history-list');
+const welcomeMessage = document.getElementById('welcome-message');
+const currentUsername = document.getElementById('current-username');
 
 // File Upload Elements
 const fileUpload = document.getElementById('file-upload');
@@ -119,8 +113,13 @@ function loadChat(id) {
 // --- MODALS & SIDEBAR ---
 
 
-openSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
-closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+closeSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    const mobileOverlay = document.getElementById('mobile-overlay');
+    if (mobileOverlay) {
+        mobileOverlay.classList.add('hidden');
+    }
+});
 newChatBtn.addEventListener('click', createNewChat);
 
 // --- CHAT INPUT LOGIC ---
@@ -152,6 +151,85 @@ fileUpload.addEventListener('change', (e) => {
     }
 });
 
+// --- DEXMCP DASHBOARD FUNCTIONALITY ---
+
+function copyBridge() {
+    const bridgeScript = `local HttpService = game:GetService("HttpService")
+local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+
+local apiUrl = "${window.location.origin}"
+
+local function connect()
+    local payload = {
+        username = game.Players.LocalPlayer.Name,
+        userId = game.Players.LocalPlayer.UserId,
+        placeId = game.PlaceId
+    }
+    
+    local success = false
+    if requestFunc then
+        local res = requestFunc({
+            Url = apiUrl .. "/api/roblox/connect",
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = HttpService:JSONEncode(payload)
+        })
+        success = res.Success
+    else
+        local s, r = pcall(function()
+            return HttpService:PostAsync(apiUrl .. "/api/roblox/connect", HttpService:JSONEncode(payload), Enum.HttpContentType.ApplicationJson)
+        end)
+        success = s
+    end
+    
+    if success then
+        print("Connected to Snowy AI!")
+    else
+        warn("Connection failed, retrying...")
+        wait(5)
+        connect()
+    end
+end
+
+local function pollCommands()
+    while true do
+        local username = game.Players.LocalPlayer.Name
+        local success, body = false, nil
+        
+        if requestFunc then
+            local res = requestFunc({ Url = apiUrl .. "/api/roblox/poll/" .. username, Method = "GET" })
+            success = res.Success
+            body = res.Body
+        else
+            local s, r = pcall(function() return HttpService:GetAsync(apiUrl .. "/api/roblox/poll/" .. username) end)
+            success = s
+            body = r
+        end
+        
+        if success and body then
+            local data = HttpService:JSONDecode(body)
+            if data and data.command then
+                local func, err = loadstring(data.command)
+                if func then
+                    pcall(func)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end
+
+task.spawn(connect)
+task.spawn(pollCommands)
+print("Snowy AI Bridge Started!")`;
+
+    navigator.clipboard.writeText(bridgeScript).then(() => {
+        alert('Bridge script copied! Paste it in your Roblox executor.');
+    }).catch(err => {
+        alert('Failed to copy: ' + err);
+    });
+}
+
 // --- FORM SUBMISSION HANDLER ---
 document.addEventListener('DOMContentLoaded', () => {
     // Prevent form submission to use our custom handler
@@ -168,6 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (discordBtn) {
         discordBtn.addEventListener('click', () => {
             alert('Discord login is not configured. Please use username login instead.');
+        });
+    }
+    
+    // Mobile overlay click to close sidebar
+    const mobileOverlay = document.getElementById('mobile-overlay');
+    if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
         });
     }
 });
@@ -251,6 +338,12 @@ loginBtn.addEventListener('click', async () => {
             if (data.success) {
                 loginScreen.classList.add('hidden');
                 chatScreen.classList.remove('hidden');
+                
+                // Update current username in sidebar
+                if (currentUsername) {
+                    currentUsername.textContent = username;
+                }
+                
                 loadChatHistory();
                 if (Object.keys(userChats).length === 0) {
                     createNewChat();
@@ -259,7 +352,6 @@ loginBtn.addEventListener('click', async () => {
                     loadChat(chatIds[0]);
                 }
                 startStatusPolling();
-                loadSuggestions();
             }
         } catch (e) {
             alert("Login error: " + e.message);
@@ -284,6 +376,17 @@ async function startStatusPolling() {
             if (data.connected) {
                 connectionBanner.classList.add('hidden');
                 showNotification();
+                
+                // Enable chat input and update placeholder
+                if (chatInput) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = "Message Snowy AI...";
+                }
+                
+                // Hide welcome message when connected
+                if (welcomeMessage) {
+                    welcomeMessage.classList.add('hidden');
+                }
                 
                 // Update live profile
                 if (data.game_data) {
