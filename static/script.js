@@ -22,17 +22,7 @@ const notificationToast = document.getElementById('notification-toast');
 const suggestionsContainer = document.getElementById('suggestions-container');
 
 // Settings Elements
-const settingsModal = document.getElementById('settings-modal');
-const openSettingsBtn = document.getElementById('open-settings');
-const closeSettingsBtn = document.getElementById('close-settings');
-const fastModeToggle = document.getElementById('fast-mode-toggle');
-const directExecuteToggle = document.getElementById('direct-execute-toggle');
-const fixOnThumbsToggle = document.getElementById('fix-on-thumbs-toggle');
-const uiMethodSelect = document.getElementById('ui-method-select');
-const generatingSpeedSlider = document.getElementById('generating-speed');
-const speedValueDisplay = document.getElementById('speed-value');
-const doubleVerifyToggle = document.getElementById('double-verify-toggle');
-const deepAnalysisToggle = document.getElementById('deep-analysis-toggle');
+let lastRobloxError = null;
 
 let lastRobloxErrorTime = 0;
 
@@ -127,8 +117,7 @@ function loadChat(id) {
 }
 
 // --- MODALS & SIDEBAR ---
-openSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
 
 openSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
 closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
@@ -147,10 +136,7 @@ chatInput.addEventListener('input', () => {
     chatInput.style.height = chatInput.scrollHeight + 'px';
 });
 
-// --- SETTINGS UPDATES ---
-generatingSpeedSlider.addEventListener('input', (e) => {
-    speedValueDisplay.textContent = e.target.value;
-});
+
 
 // --- FILE UPLOAD LOGIC ---
 fileUpload.addEventListener('change', (e) => {
@@ -308,25 +294,15 @@ async function startStatusPolling() {
                     }
                 }
 
-                // Check for Roblox Errors (Double Verification)
+                // Check for Roblox Errors
                 if (data.last_error && data.last_error.time > lastRobloxErrorTime) {
                     lastRobloxErrorTime = data.last_error.time;
                     console.warn("Roblox Error Detected:", data.last_error.message);
-                    
-                    if (doubleVerifyToggle.checked && lastAICodeContent) {
-                        // In-place Fix
-                        lastAIResponseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        const errorOverlay = document.createElement('div');
-                        errorOverlay.className = 'error-overlay';
-                        errorOverlay.innerHTML = `<i class="fas fa-magic"></i> Error detected: ${data.last_error.message}<br>Auto-fixing in place...`;
-                        lastAIResponseContainer.appendChild(errorOverlay);
-                        
-                        setTimeout(async () => {
-                            errorOverlay.remove();
-                            // Trigger the fix but target the existing container
-                            await triggerInPlaceFix(data.last_error.message, data.last_error.code);
-                        }, 2000);
-                    }
+                    lastRobloxError = {
+                        message: data.last_error.message,
+                        code: data.last_error.code,
+                        time: Date.now() / 1000
+                    };
                 }
                 
             } else {
@@ -361,7 +337,7 @@ function createThinkingBlock(id, userQuery = "") {
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
     // Initial Deep Analysis Logs (Simulated for flavor but using real data)
-    if (deepAnalysisToggle.checked) {
+    if (true) {
         const query = userQuery.toLowerCase();
         let primaryTarget = "relevant objects";
         if (query.includes("plot")) primaryTarget = "Plots & Bases";
@@ -457,27 +433,9 @@ let lastAIResponseContainer = null;
 let lastAICodeContent = null;
 
 async function streamText(element, text) {
-    const speed = parseInt(generatingSpeedSlider.value);
     const isAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 100;
-
-    if (speed >= 10) {
-        element.innerHTML = text.replace(/\n/g, '<br>');
-        if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
-        return;
-    }
-    
-    const delay = Math.max(0, 50 - (speed * 5));
-    
-    element.innerHTML = '';
-    for (let char of text) {
-        if (char === '\n') {
-            element.appendChild(document.createElement('br'));
-        } else {
-            element.innerHTML += char;
-        }
-        if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
-        if (delay > 0) await new Promise(r => setTimeout(r, delay));
-    }
+    element.innerHTML = text.replace(/\n/g, '<br>');
+    if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // --- AGENTIC ACTION BAR ---
@@ -512,10 +470,13 @@ function createAgenticActions(code, messageId) {
     const downBtn = createIconButton('fa-thumbs-down', 'Bad', () => {
         downBtn.classList.toggle('active');
         upBtn.classList.remove('active');
-        if (fixOnThumbsToggle.checked) {
-            chatInput.value = "The previous script didn't work. Please fix it and make it better.";
-            sendMessage();
+        
+        let messageText = "The previous script didn't work. Please fix it and make it better.";
+        if (lastRobloxError && (Date.now() / 1000 - lastRobloxError.time < 300)) {
+            messageText = `The previous script failed with error: "${lastRobloxError.message}". Please fix this error and make the script better.\n\nFailed Code:\n${lastRobloxError.code}`;
         }
+        chatInput.value = messageText;
+        sendMessage();
     });
     downBtn.classList.add('thumbs-down');
 
@@ -582,9 +543,9 @@ async function sendMessage() {
     const thinkingObj = createThinkingBlock(thinkingId, messageText);
 
     const selectedModel = document.getElementById('model-select').value;
-    const fastMode = fastModeToggle.checked;
-    const directExecute = directExecuteToggle.checked;
-    const uiMethod = uiMethodSelect.value;
+    const fastMode = true;
+    const directExecute = true;
+    const uiMethod = 'custom';
 
     try {
         const data = await safeFetchJson('/api/chat', {
@@ -693,37 +654,10 @@ chatInput.addEventListener('keypress', (e) => {
 });
 
 copyScriptBtn.addEventListener('click', () => {
-    const scriptToCopy = `loadstring(game:HttpGet("https://raw.githubusercontent.com/cleomu05-rgb/script/refs/heads/main/roblox/antigravity"))()`;
+    const scriptToCopy = `loadstring(game:HttpGet("${window.location.origin}/raw/script"))()`;
     navigator.clipboard.writeText(scriptToCopy).then(() => {
         copyScriptBtn.textContent = "Copied!";
         setTimeout(() => { copyScriptBtn.textContent = "Copy"; }, 2000);
     });
 });
-async function triggerInPlaceFix(errorMsg, failedCode) {
-    if (!lastAICodeContent) return;
-    
-    // Clear the code and show a "fixing" animation
-    lastAICodeContent.innerHTML = "<i class='fas fa-sync fa-spin'></i> Analyzing error...";
-    
-    const response = await fetch('/api/chat', {
-        method: 'POST',
-        keepalive: true,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            username: currentUser, 
-            message: `FIX THIS ERROR: ${errorMsg}\n\nFAILED CODE:\n${failedCode}`, 
-            model: document.getElementById('model-select').value,
-            fast_mode: fastModeToggle.checked,
-            direct_execute: directExecuteToggle.checked,
-            ui_method: uiMethodSelect.value
-        })
-    });
-    
-    const data = await response.json();
-    if (data.success && data.lua_code) {
-        // Stream the fix into the SAME container
-        await streamText(lastAICodeContent, data.lua_code);
-        // Update the action bar if needed (optional)
-        showToast("Script Auto-Fixed!");
-    }
-}
+
