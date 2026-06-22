@@ -436,4 +436,6 @@ def rb_poll(username):
     return jsonify({"command": None})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    print("Starting Snowy AI Server...")
+    print("Server will be available at: http://localhost:5000")
+    app.run(host='0.0.0.0', port=5000, debug=True)
